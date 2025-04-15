@@ -14,11 +14,7 @@ class DL(Utils, Helper, ModelInit, Operations):
         self.case = isCase
         self.params = self.Defaults(self.case) # Define some default parameters based on the selected case
         self.isTesting = False
-        self.AWS = False
-
-
-        #choose whether to run pytorch or tensorflow 
-        self.run_torch = 0
+        self.AWS = False        
 
 if __name__ == "__main__":
 
