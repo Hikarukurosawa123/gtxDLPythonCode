@@ -25,7 +25,7 @@ import mat73
 from os.path import isfile, join
 import time
 import tempfile
-
+import os
 
 #from DataImport import MyDataset
 class MonteCarloDropout(Dropout):
@@ -112,53 +112,66 @@ class Helper():
 
         s3_client = boto3.client('s3')
 
-        h5_files = []      
+        keras_files = []
         
         time.sleep(1.5)
 
-                
-        bucket = self.bucket
-        folder = "ModelParameters"
-        s3 = boto3.resource("s3")
-        s3_bucket = s3.Bucket(bucket)
-        files_in_s3 = [f.key.split(folder + "/")[1] for f in s3_bucket.objects.filter(Prefix=folder).all()]
+        #choose to import data from bucket or the local file path "ModelParameters"
+        from_S3 = 0
+        
+        if from_S3:
+            bucket = self.bucket
+            folder = "ModelParameters"
+            s3 = boto3.resource("s3")
+            s3_bucket = s3.Bucket(bucket)
+            files_in_s3 = [f.key.split(folder + "/")[1] for f in s3_bucket.objects.filter(Prefix=folder).all()]
 
-        #filter files 
-        for file in files_in_s3:
-            if file.endswith((".keras", ".pt")):
-                filename = "ModelParameters/"+ file 
-                
-                h5_files.append(filename)
-                print(filename)  
-
+            #filter files 
+            for file in files_in_s3:
+                if file.endswith((".keras")):
+                    filename = "ModelParameters/"+ file 
+                    keras_files.append(filename)
+        else: 
+            #display the model parameters available for export 
+            for folder in os.listdir("ModelParameters"):
+                #if not folder.endswith((".keras")):
+                for file in os.listdir("ModelParameters/"+folder):
+                    if file.endswith((".keras")):
+                        filename = "ModelParameters/"+folder+'/'+file
+                        keras_files.append(filename)
+                        print(filename)  
         while True: # Loop until user makes acceptable choice for the input directory
-            loadFile = input('Enter the general and specific directory pertaining to the .h5 (weights) file you would like to load: ')
+            loadFile = input('Enter the general and specific directory pertaining to the .keras (weights) file you would like to load: ')
             if loadFile == '': # User enters nothing; break
                 break
-            elif loadFile in h5_files:
+            elif loadFile in keras_files:
 
-                #load file from s3 
-                obj = s3_client.get_object(Bucket=self.bucket, Key=loadFile)
+                if from_S3:
 
-                # Read the binary content of the file
-                model_data = obj['Body'].read()
+                    #load file from s3 
+                    obj = s3_client.get_object(Bucket=self.bucket, Key=loadFile)
 
-                # Create a temporary file to store the model
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.keras') as tmp_file:
-                    # Write the binary data to the temporary file
-                    tmp_file.write(model_data)
-                    tmp_file_path = tmp_file.name  # Get the path to the temporary file
+                    # Read the binary content of the file
+                    model_data = obj['Body'].read()
 
-                # Load the model from the temporary file
+                    # Create a temporary file to store the model
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.keras') as tmp_file:
+                        # Write the binary data to the temporary file
+                        tmp_file.write(model_data)
+                        tmp_file_path = tmp_file.name  # Get the path to the temporary file
 
-                self.modelD = load_model(tmp_file_path, compile=False)
-                
-                # Optionally, clean up the temporary file (if delete=False)
-                import os
-                os.remove(tmp_file_path)  # If you want to delete the temp file manually
+                    # Load the model from the temporary file
 
-                break
+                    self.modelD = load_model(tmp_file_path, compile=False)
                     
+                    os.remove(tmp_file_path)  # If you want to delete the temp file manually
+
+                    break
+                else:
+                    #if running from local file 
+                    self.modelD = load_model(loadFile, compile=False)
+                    break
+
             else: # If the modelD attribute does not exist
                 print('\nModel is not currently defined - select again.') 
                 break
@@ -224,6 +237,8 @@ class Helper():
             
         DF_min = np.array(DF_min)
         DFP_min = np.array(DFP_min)
+
+        print(DFP_min)
         #QF_max = np.array(QF_max)
         #QFP_max = np.array(QFP_max)
 
