@@ -117,7 +117,7 @@ class Helper():
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 0
+        from_S3 = 1
         
         if from_S3:
             bucket = self.bucket
@@ -311,17 +311,18 @@ class Helper():
 
         self.save = 'n'
         plot_save_path = './predictions/'
+        
 
         if self.DF.shape[0] < 10:
             for i in range(self.DF.shape[0]):
                 fig, axs = plt.subplots(2,3)
                 plt.set_cmap('jet')
-                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04)
+                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=10), ax=axs[0, 0],fraction=0.046, pad=0.04)
                 
                 
                 axs[0,0].axis('off')
                 axs[0,0].set_title('True Depth (mm)')
-                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04)
+                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=10), ax=axs[0, 1],fraction=0.046, pad=0.04)
                 axs[0,1].axis('off')
                 axs[0,1].set_title('Predicted Depth (mm)')
                 

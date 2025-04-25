@@ -12,3 +12,5 @@ scikit_learn==1.6.1
 scipy==1.15.2
 tensorflow==2.19.0
 ipykernel==6.29.5
+scikit-image
+opencv-python
