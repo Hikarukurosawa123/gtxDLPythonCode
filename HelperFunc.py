@@ -131,6 +131,7 @@ class Helper():
                 if file.endswith((".keras")):
                     filename = "ModelParameters/"+ file 
                     keras_files.append(filename)
+                    print(filename)
         else: 
             #display the model parameters available for export 
             for folder in os.listdir("ModelParameters"):

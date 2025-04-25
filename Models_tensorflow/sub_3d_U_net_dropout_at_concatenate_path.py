@@ -62,7 +62,7 @@ def Model(self):
 
         x = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
         #apply dropout to the long path connection 
-        x = Dropout(0.5)(x)
+        #x = Dropout(0.5)(x)
 
         s = self.attention_gate(x, Conv_3, 512)
 
@@ -84,7 +84,7 @@ def Model(self):
                         activation=self.params['activation'], data_format="channels_last")(Conv_4)
         x = Conv_1
         #apply dropout to the long path connection 
-        x = Dropout(0.5)(x)
+        #x = Dropout(0.5)(x)
 
         Conv_4_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_4)
 
@@ -118,8 +118,7 @@ def Model(self):
                         
         Up_conv_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(Up_conv_3)
 
-        print("Up_conv shape", Up_conv_3.shape)
-        print("s shape", s.shape)
+        
         s = s[:,0:s.shape[1] - 1, 0:s.shape[2] - 1, :]
         concat_2 = concatenate([Up_conv_3,s],axis=-1)  
 

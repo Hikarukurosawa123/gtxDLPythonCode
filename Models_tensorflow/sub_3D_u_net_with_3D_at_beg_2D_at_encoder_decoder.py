@@ -50,32 +50,26 @@ def Model(self):
         Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Conv_1)
         
-
         Max_Pool_2 = MaxPool2D()(Conv_1)
 
         Conv_2 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Max_Pool_2)
         Conv_2 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Conv_2)
-        print("Conv_2: ", Conv_2.shape)
 
         Max_Pool_3 = MaxPool2D()(Conv_2)
-
 
         Conv_3 = Conv2D(filters=1024, kernel_size=(self.params['kernelConv2D']), strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Max_Pool_3)
         Conv_3 = Conv2D(filters=1024, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Conv_3)
-        print("Conv_3: ", Conv_3.shape)
 
         #decoder 
 
-        x = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
-        s = self.attention_gate(x, Conv_3, 512)
+        #adjust size of Conv_2
+        long_path_1 = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
+        attention_1 = self.attention_gate(long_path_1, Conv_3, 512)
 
-        print("x shape", x.shape)
-
-        print("s shape", s.shape)
         Up_conv_1 = UpSampling2D()(Conv_3)
 
         
@@ -83,17 +77,18 @@ def Model(self):
                 activation=self.params['activation'], data_format="channels_last")(Up_conv_1)
 
         #attention block 
-        concat_1 = concatenate([Up_conv_1,s],axis=-1)
-
+        concat_1 = concatenate([Up_conv_1,attention_1],axis=-1)
 
         Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(concat_1)
 
         Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Conv_4)
-        x = Conv_1
+        
+        long_path_2 = Conv_1
         Conv_4_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_4)
-        s = self.attention_gate(x, Conv_4_zero_pad, 256)
+
+        attention_2 = self.attention_gate(long_path_2, Conv_4_zero_pad, 256)
 
         Up_conv_2 = UpSampling2D()(Conv_4)
 
@@ -102,16 +97,17 @@ def Model(self):
 
         Up_conv_2 = ZeroPadding2D()(Up_conv_2)
 
-        concat_2 = concatenate([Up_conv_2,s],axis=-1)
+        concat_2 = concatenate([Up_conv_2,attention_2],axis=-1)
 
         Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(concat_2)
         Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                 activation=self.params['activation'], data_format="channels_last")(Conv_5)
-        x = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
+        
+        long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
         Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
 
-        s = self.attention_gate(x, Conv_5_zero_pad, 128)
+        attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
 
         Up_conv_3 = UpSampling2D()(Conv_5)
         Up_conv_3 = Conv2D(filters=128, kernel_size = (2,2), strides=(1,1), padding='same', 
@@ -119,13 +115,11 @@ def Model(self):
                         
         Up_conv_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(Up_conv_3)
 
-        print("Up_conv shape", Up_conv_3.shape)
-        print("s shape", s.shape)
-        s = s[:,0:s.shape[1] - 1, 0:s.shape[2] - 1, :]
-        concat_2 = concatenate([Up_conv_3,s],axis=-1)  
+        attention_3 = attention_3[:,0:attention_3.shape[1] - 1, 0:attention_3.shape[2] - 1, :]
+        concat_3 = concatenate([Up_conv_3,attention_3],axis=-1)  
 
         Conv_6 = Conv2D(filters=128, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                activation=self.params['activation'], data_format="channels_last")(concat_2)
+                activation=self.params['activation'], data_format="channels_last")(concat_3)
 
         ## Quantitative Fluorescence Output Branch ##
         outQF = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
