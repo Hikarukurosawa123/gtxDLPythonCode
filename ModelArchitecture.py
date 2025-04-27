@@ -24,7 +24,6 @@ class ModelInit():
 
                 """The deep learning architecture gets defined here"""
                 
-        
                 # Input Optical Properties ##
                 inOP_beg = Input(shape=(self.params['xX'],self.params['yY'],2))
                 ## Input Multi-Dimensional Fluorescence ##
@@ -36,70 +35,101 @@ class ModelInit():
 
                 ## Optical Properties Branch ##
                 inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
-                
-                inOP = Dropout(0.5)(inOP)
+                        padding='same', data_format="channels_last")(inOP_beg)
+                #inOP = Dropout(0.5)(inOP)
+                inOP = BatchNormalization()(inOP)
+                inOP = ReLU()(inOP)
 
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                
-                inOP = Dropout(0.5)(inOP)
+                        padding='same', data_format="channels_last")(inOP)
+                #inOP = Dropout(0.5)(inOP)
 
+                inOP = BatchNormalization()(inOP)
+                inOP = ReLU()(inOP)
+                
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
+                        padding='same', data_format="channels_last")(inOP)
+                
+                #inOP = Dropout(0.5)(inOP)  
                 ## Fluorescence Input Branch ##
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
                 input_shape = inFL_beg.shape
 
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
+                        padding='same', input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
+                #inFL = Dropout(0.5)(inFL)
 
-                inFL = Dropout(0.5)(inFL)
+                inFL = BatchNormalization()(inFL)
+                inFL = ReLU()(inFL)
 
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
+                        padding='same',data_format="channels_last")(inFL)
+                #inFL = Dropout(0.5)(inFL)
+
+                inFL = BatchNormalization()(inFL)
+                inFL = ReLU()(inFL)
+
+                inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
+                        padding='same', data_format="channels_last")(inFL)
+                #inFL = Dropout(0.5)(inFL)
+
                 
-                inFL = Dropout(0.5)(inFL)
-
-                inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-
                 ## Concatenate Branch ##
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
                 concat = concatenate([inOP,inFL],axis=-1)
 
+                concat = BatchNormalization()(concat)
+                concat = ReLU()(concat)
+
                 Max_Pool_1 = MaxPool2D()(concat)
 
                 Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Max_Pool_1)
-                Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_1)
+                        data_format="channels_last")(Max_Pool_1)
                 
+                Conv_1 = BatchNormalization()(Conv_1)
+                Conv_1 = ReLU()(Conv_1)
+
+                Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        data_format="channels_last")(Conv_1)
+                
+
+                Conv_1 = BatchNormalization()(Conv_1)
+                Conv_1 = ReLU()(Conv_1)
 
                 Max_Pool_2 = MaxPool2D()(Conv_1)
 
                 Conv_2 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Max_Pool_2)
+                        data_format="channels_last")(Max_Pool_2)
+                
+                Conv_2 = BatchNormalization()(Conv_2)
+                Conv_2 = ReLU()(Conv_2)
+
                 Conv_2 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_2)
+                        data_format="channels_last")(Conv_2)
+                
+                Conv_2 = BatchNormalization()(Conv_2)
+                Conv_2 = ReLU()(Conv_2)
 
                 Max_Pool_3 = MaxPool2D()(Conv_2)
 
-
                 Conv_3 = Conv2D(filters=1024, kernel_size=(self.params['kernelConv2D']), strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Max_Pool_3)
+                        data_format="channels_last")(Max_Pool_3)
+                
+                Conv_3 = BatchNormalization()(Conv_3)
+                Conv_3 = ReLU()(Conv_3)
+
                 Conv_3 = Conv2D(filters=1024, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_3)
+                        data_format="channels_last")(Conv_3)
+                
+                Conv_3 = BatchNormalization()(Conv_3)
+                Conv_3 = ReLU()(Conv_3)
 
                 #decoder 
 
-                x = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
-                #apply dropout to the long path connection 
-                #x = Dropout(0.5)(x)
+                #adjust size of Conv_2
+                long_path_1 = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
+                attention_1 = self.attention_gate(long_path_1, Conv_3, 512)
 
-                s = self.attention_gate(x, Conv_3, 512)
-
-        
                 Up_conv_1 = UpSampling2D()(Conv_3)
 
                 
@@ -107,21 +137,24 @@ class ModelInit():
                         activation=self.params['activation'], data_format="channels_last")(Up_conv_1)
 
                 #attention block 
-                concat_1 = concatenate([Up_conv_1,s],axis=-1)
-
-
-                Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_1)
+                concat_1 = concatenate([Up_conv_1,attention_1],axis=-1)
 
                 Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                                activation=self.params['activation'], data_format="channels_last")(Conv_4)
-                x = Conv_1
-                #apply dropout to the long path connection 
-                #x = Dropout(0.5)(x)
+                        data_format="channels_last")(concat_1)
+                
+                Conv_4 = BatchNormalization()(Conv_4)
+                Conv_4 = ReLU()(Conv_4)
 
+                Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                                data_format="channels_last")(Conv_4)
+                
+                Conv_4 = BatchNormalization()(Conv_4)
+                Conv_4 = ReLU()(Conv_4)
+                
+                long_path_2 = Conv_1
                 Conv_4_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_4)
 
-                s = self.attention_gate(x, Conv_4_zero_pad, 256)
+                attention_2 = self.attention_gate(long_path_2, Conv_4_zero_pad, 256)
 
                 Up_conv_2 = UpSampling2D()(Conv_4)
 
@@ -130,20 +163,24 @@ class ModelInit():
 
                 Up_conv_2 = ZeroPadding2D()(Up_conv_2)
 
-                concat_2 = concatenate([Up_conv_2,s],axis=-1)
+                concat_2 = concatenate([Up_conv_2,attention_2],axis=-1)
 
                 Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_2)
-                Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_5)
+                        data_format="channels_last")(concat_2)
                 
-                x = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
-                #apply dropout to the long path connection 
-                #x = Dropout(0.5)(x)
+                Conv_5 = BatchNormalization()(Conv_5)
+                Conv_5 = ReLU()(Conv_5)
 
+                Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        data_format="channels_last")(Conv_5)
+                
+                Conv_5 = BatchNormalization()(Conv_5)
+                Conv_5 = ReLU()(Conv_5)
+
+                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
                 Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
 
-                s = self.attention_gate(x, Conv_5_zero_pad, 128)
+                attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
 
                 Up_conv_3 = UpSampling2D()(Conv_5)
                 Up_conv_3 = Conv2D(filters=128, kernel_size = (2,2), strides=(1,1), padding='same', 
@@ -151,21 +188,29 @@ class ModelInit():
                                 
                 Up_conv_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(Up_conv_3)
 
-                
-                s = s[:,0:s.shape[1] - 1, 0:s.shape[2] - 1, :]
-                concat_2 = concatenate([Up_conv_3,s],axis=-1)  
+                attention_3 = attention_3[:,0:attention_3.shape[1] - 1, 0:attention_3.shape[2] - 1, :]
+                concat_3 = concatenate([Up_conv_3,attention_3],axis=-1)  
+
 
                 Conv_6 = Conv2D(filters=128, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_2)
+                        data_format="channels_last")(concat_3)
+                
+                Conv_6 = BatchNormalization()(Conv_6)
+                Conv_6 = ReLU()(Conv_6)
 
                 ## Quantitative Fluorescence Output Branch ##
                 outQF = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
+                        data_format="channels_last")(Conv_6)
+                
+                outQF = BatchNormalization()(outQF)
+                outQF = ReLU()(outQF)
 
                 outQF = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outQF) #outQF
+                        data_format="channels_last")(outQF) #outQF
                 
                 #outQF = BatchNormalization()(outQF)
+                outQF = BatchNormalization()(outQF)
+                outQF = ReLU()(outQF)
                 
                 outQF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                                 data_format="channels_last")(outQF)
@@ -173,13 +218,17 @@ class ModelInit():
                 ## Depth Fluorescence Output Branch ##
                 #first DF layer 
                 outDF = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
+                        data_format="channels_last")(Conv_6)
+                
+                outDF = BatchNormalization()(outDF)
+                outDF = ReLU()(outDF)
 
                 outDF = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(outDF)
-
+                
+                outDF = BatchNormalization()(outDF)
+                outDF = ReLU()(outDF)
                 #outDF = BatchNormalization()(outDF)
-
                 
                 outDF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         data_format="channels_last")(outDF)
