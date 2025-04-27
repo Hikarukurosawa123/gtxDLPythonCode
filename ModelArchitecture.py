@@ -224,7 +224,7 @@ class ModelInit():
                 outDF = ReLU()(outDF)
 
                 outDF = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outDF)
+                        data_format="channels_last")(outDF)
                 
                 outDF = BatchNormalization()(outDF)
                 outDF = ReLU()(outDF)
