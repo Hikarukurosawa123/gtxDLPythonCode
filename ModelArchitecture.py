@@ -35,15 +35,15 @@ class ModelInit():
                 ## Optical Properties Branch ##
                 inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
-                inOP = Dropout(0.75)(inOP)
+                inOP = Dropout(0.50)(inOP)
 
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                inOP = Dropout(0.75)(inOP)
+                inOP = Dropout(0.50)(inOP)
                 
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                inOP = Dropout(0.75)(inOP)  
+                inOP = Dropout(0.50)(inOP)
                 ## Fluorescence Input Branch ##
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
                 input_shape = inFL_beg.shape
@@ -51,15 +51,15 @@ class ModelInit():
 
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
-                inFL = Dropout(0.75)(inFL)
+                inFL = Dropout(0.50)(inFL)
                 print(inFL.shape)
 
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                inFL = Dropout(0.75)(inFL)
+                inFL = Dropout(0.50)(inFL)
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                inFL = Dropout(0.75)(inFL)
+                inFL = Dropout(0.50)(inFL)
 
                 ## Concatenate Branch ##
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
@@ -153,7 +153,7 @@ class ModelInit():
                 #outQF = BatchNormalization()(outQF)
                 
                 outQF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                                data_format="channels_last")(outQF)
+                               data_format="channels_last")(outQF)
 
                 ## Depth Fluorescence Output Branch ##
                 #first DF layer 
@@ -167,7 +167,7 @@ class ModelInit():
 
                 
                 outDF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        data_format="channels_last")(outDF)
+                         data_format="channels_last")(outDF)
 
                 ## Defining and compiling the model ##
                 self.modelD = Model(inputs=[inOP_beg,inFL_beg], outputs=[outQF, outDF])#,outFL])

@@ -256,6 +256,14 @@ class Operations():
             else:
                 self.FL *= self.params['scaleFL']
                 #self.FL[:,:,:,:] /= FL_max
+
+            #apply random scaling for FL 
+            # import random
+            # for i in range(len(self.FL)):
+            #    random_scale = random.uniform(0.25, 4.00)
+            #    self.FL[i] = self.FL[i] * random_scale
+                
+                
                 
             if apply_normalization:
                 #apply normalization on FL 

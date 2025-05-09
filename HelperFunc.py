@@ -318,17 +318,17 @@ class Helper():
             for i in range(self.DF.shape[0]):
                 fig, axs = plt.subplots(2,3)
                 plt.set_cmap('jet')
-                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=6), ax=axs[0, 0],fraction=0.046, pad=0.04)
+                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04)
                 
                 
                 axs[0,0].axis('off')
                 axs[0,0].set_title('True Depth (mm)', pad = 10)
-                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=6), ax=axs[0, 1],fraction=0.046, pad=0.04)
+                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04)
                 axs[0,1].axis('off')
                 axs[0,1].set_title('Predicted Depth (mm)', pad = 10)
                 
                 print(np.shape(DF_error))
-                plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=6), ax=axs[0, 2],fraction=0.046, pad=0.04)
+                plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=15), ax=axs[0, 2],fraction=0.046, pad=0.04)
                 axs[0,2].axis('off')
                 axs[0,2].set_title('|Error (mm)|', pad = 10)
                 plt.colorbar(axs[1,0].imshow(self.QF[i,:,:],vmin=0,vmax=10), ax=axs[1, 0],fraction=0.046, pad=0.04)
