@@ -33,33 +33,38 @@ class ModelInit():
                 #3D CNN for all layers
 
                 ## Optical Properties Branch ##
+
+                #mask the input data 
+                inOP = Dropout(0.50)(inOP_beg)
+
                 inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
-                inOP = Dropout(0.50)(inOP)
+                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
+                #inOP = Dropout(0.50)(inOP)
 
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                inOP = Dropout(0.50)(inOP)
+                #inOP = Dropout(0.50)(inOP)
                 
                 inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                inOP = Dropout(0.50)(inOP)
+                #inOP = Dropout(0.50)(inOP)
                 ## Fluorescence Input Branch ##
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
                 input_shape = inFL_beg.shape
-                print(input_shape)
+
+                inFL = Dropout(0.50)(inFL_beg)
+
 
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
-                inFL = Dropout(0.50)(inFL)
-                print(inFL.shape)
+                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
+                #inFL = Dropout(0.50)(inFL)
 
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                inFL = Dropout(0.50)(inFL)
+                #inFL = Dropout(0.50)(inFL)
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                inFL = Dropout(0.50)(inFL)
+                #inFL = Dropout(0.50)(inFL)
 
                 ## Concatenate Branch ##
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
