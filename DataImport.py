@@ -114,6 +114,7 @@ class Operations():
 
         #determine where to import testing/training data from 
         s3_client = boto3.client('s3')
+        time.sleep(1.5)
 
         
         # Ask user to input if they are testing are not - indicates if you need to flip
@@ -477,7 +478,7 @@ class Operations():
                                     epochs=50, verbose=1, shuffle=True, callbacks=callbackList)     
         else:
 
-            self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
+            self.history = self.modelD.fit([self.FL], [self.FL],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):
