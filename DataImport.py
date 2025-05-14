@@ -155,8 +155,6 @@ class Operations():
             print("file key: ", self.file_key)
             self.folder_name = str(Path(self.file_key).relative_to("TestingData").parent.as_posix().replace("/", "_"))
 
-        print(self.folder_name)
-
         dataTemp = obj['Body'].read()
     
         self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
