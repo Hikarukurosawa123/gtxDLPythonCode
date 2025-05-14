@@ -1,9 +1,11 @@
 
 from keras.models import Model, load_model
-from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU
+from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU, Lambda
 from keras.preprocessing import image
 import keras
 
+import numpy as np 
+import tensorflow as tf 
 class ModelInit():  
 
         def __init__(self):
@@ -22,55 +24,44 @@ class ModelInit():
         
         def Model_tf(self):
 
+
                 """The deep learning architecture gets defined here"""
-                # Input Optical Properties ##
-                inOP_beg = Input(shape=(self.params['xX'],self.params['yY'],2))
+
                 ## Input Multi-Dimensional Fluorescence ##
-                inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF'], 1))
+                inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF']))
 
                 ## NOTE: Batch normalization can cause instability in the validation loss
-
-                #3D CNN for all layers
-
-                ## Optical Properties Branch ##
-
-                #mask the input data 
-                inOP = Dropout(0.50)(inOP_beg)
-
-                inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                #inOP = Dropout(0.50)(inOP)
-
-                inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                #inOP = Dropout(0.50)(inOP)
                 
-                inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
-                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
-                #inOP = Dropout(0.50)(inOP)
                 ## Fluorescence Input Branch ##
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
                 input_shape = inFL_beg.shape
+                        
+                random_mask = np.random.choice([1, 0], size=(32, self.params['xX'],self.params['yY'],self.params['nF']), p=[1 - 0.5, 0.5])
+                mask = tf.constant(random_mask, dtype=tf.float32)  # shape: (xX, yY, nF, 1)
 
-                inFL = Dropout(0.50)(inFL_beg)
+                def apply_mask(x):
+                        return x * mask
+
+                inFL_beg = Lambda(apply_mask)(inFL_beg)
+
+                inFL_beg = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], inFL_beg.shape[3], 1))(inFL_beg)
 
 
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
-                #inFL = Dropout(0.50)(inFL)
+                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
+                #inFL = Dropout(0.5)(inFL)
 
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                #inFL = Dropout(0.50)(inFL)
+                #inFL = Dropout(0.5)(inFL)
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                         padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
-                #inFL = Dropout(0.50)(inFL)
+                #inFL = Dropout(0.5)(inFL)
 
                 ## Concatenate Branch ##
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
-                concat = concatenate([inOP,inFL],axis=-1)
 
-                Max_Pool_1 = MaxPool2D()(concat)
+                Max_Pool_1 = MaxPool2D()(inFL)
 
                 Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Max_Pool_1)
@@ -147,37 +138,28 @@ class ModelInit():
 
                 Conv_6 = Conv2D(filters=128, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(concat_3)
-
-                ## Quantitative Fluorescence Output Branch ##
-                outQF = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
-
-                outQF = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outQF) #outQF
                 
-                #outQF = BatchNormalization()(outQF)
-                
-                outQF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                               data_format="channels_last")(outQF)
-
                 ## Depth Fluorescence Output Branch ##
                 #first DF layer 
-                outDF = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
+                outFL = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        activation=self.params['activation'], data_format="channels_last")(outFL)
 
-                outDF = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outDF)
+                outFL = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        activation=self.params['activation'], data_format="channels_last")(outFL)
 
                 #outDF = BatchNormalization()(outDF)
 
                 
-                outDF = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                         data_format="channels_last")(outDF)
+                outFL = Conv2D(filters=6, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        data_format="channels_last")(outFL)
 
                 ## Defining and compiling the model ##
-                self.modelD = Model(inputs=[inOP_beg,inFL_beg], outputs=[outQF, outDF])#,outFL])
-                self.modelD.compile(loss=['mae', 'mae'],
+                self.modelD = Model(inputs=[inFL_beg], outputs=[outFL])#,outFL])
+                self.modelD.compile(loss=['mae'],
                         optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
-                        metrics=['mae', 'mae'])
+                        metrics=['mae'])
                 self.modelD.summary()
                 return None
+
+
+

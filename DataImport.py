@@ -13,6 +13,7 @@ from botocore.exceptions import ClientError
 import os
 import mat73
 from datetime import datetime
+from pathlib import Path
 
 class Operations():
     
@@ -148,6 +149,13 @@ class Operations():
         
         obj = s3_client.get_object(Bucket=self.bucket, Key=self.file_key)
 
+        #extract the parent folder name of the .mat file 
+        if isTesting: 
+            print("file key: ", self.file_key)
+            self.folder_name = str(Path(self.file_key).relative_to("TestingData").parent.as_posix().replace("/", "_"))
+
+        print(self.folder_name)
+
         dataTemp = obj['Body'].read()
     
         self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
@@ -171,13 +179,14 @@ class Operations():
             self.FL = np.expand_dims(self.dataset['RE'], axis=0)
 
         #pad with ones temporarily 
-        # if pad:
+        pad = 0
+        if pad:
 
-        # self.DF = np.pad(self.DF, ((0,0), (0, 1), (0, 1)), mode='constant')
-        # self.OP = np.pad(self.OP, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
-        # self.QF = np.pad(self.QF, ((0,0),(0, 1), (0, 1)), mode='constant')
-        # self.RE = np.pad(self.RE, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
-        # self.FL = np.pad(self.FL, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
+            self.DF = np.pad(self.DF, ((0,0), (0, 1), (0, 1)), mode='constant')
+            self.OP = np.pad(self.OP, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
+            self.QF = np.pad(self.QF, ((0,0),(0, 1), (0, 1)), mode='constant')
+            self.RE = np.pad(self.RE, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
+            self.FL = np.pad(self.FL, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
 
 
     

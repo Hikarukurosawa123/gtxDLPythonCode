@@ -34,7 +34,7 @@ class MonteCarloDropout(Dropout):
     
 
     
-class Helper():
+class Helper(Operations):
     def __init__(self):
         super().__init__()
 
@@ -189,7 +189,7 @@ class Helper():
         print("loaded")
 
 
-    def Analysis(self):
+    def Analysis(self, save_image = 0):
         
         
         self.import_data_for_testing()
@@ -238,22 +238,18 @@ class Helper():
             
         DF_min = np.array(DF_min)
         DFP_min = np.array(DFP_min)
-
         print(DFP_min)
-        #QF_max = np.array(QF_max)
-        #QFP_max = np.array(QFP_max)
+        plot_save_path =  os.path.join('./predictions/' + self.folder_name)
+
+        if save_image:
+            np.savetxt(plot_save_path + "_depth_predict_min.txt", DFP_min, fmt="%.4f")  # You can adjust fmt for formatting
+            #np.savetxt(plot_save_path + "_depth_truth_min.txt", DF_min, fmt="%.4f")  # You can adjust fmt for formatting
 
         #compute absolute mindepth error 
         min_depth_error = np.mean(np.abs(DFP_min - DF_min))
         min_depth_error_std = np.std(np.abs(DFP_min - DF_min))
         print("Average Minimum Depth Error (SD) : {min_depth_error} ({min_depth_error_std})".format(min_depth_error = min_depth_error, min_depth_error_std = min_depth_error_std))
 
-        
-        #num_predict_zeros = self.count_predictions_of_zero(DFP_min)
-        #print("number of predictions of zero:", num_predict_zeros)
-        # SSIM per sample
-        DF_ssim =[]
-        QF_ssim =[]
         
         ## Plot Correlations
         
@@ -305,14 +301,12 @@ class Helper():
         matplotlib.rc('font', **font)
 
         min_depth_graph.show()
-
-        num_plot_display = np.shape(self.DF)[0]
         
-        num_example_inclusion = [x * 19 for x in range(40)]
 
-        self.save = 'n'
-        plot_save_path = './predictions/'
-        
+        #define path to save the predictions 
+        if save_image:
+            self.save = 'y'
+        plot_save_path =  os.path.join('./predictions/' + self.folder_name)
 
         if self.DF.shape[0] < 10:
             for i in range(self.DF.shape[0]):
@@ -341,13 +335,13 @@ class Helper():
                 axs[1,2].axis('off')
                 axs[1,2].set_title('|Error (ug/mL)|', pad = 10)
                 plt.tight_layout()   
-                if i == 0 and self.save in ['Y','y']:
-                    plot_save_path_DF = plot_save_path + 'DF.png'
+                if self.save in ['Y','y']:
+                    plot_save_path_DF = plot_save_path + '_depth_' + str(i) +'_DF_QF.png'
                     plt.savefig(plot_save_path_DF, dpi=100, bbox_inches='tight')
                 plt.show()
         else:
             
-            for i in range(num_plot_display):#range(num_plot_display):
+            for i in range(np.shape(self.DF)[0]):#range(num_plot_display):
                 print("DF, DF pred: ", DF_min[i], DFP_min[i])
                 fig, axs = plt.subplots(2,3)
                 plt.set_cmap('jet')
@@ -376,8 +370,8 @@ class Helper():
                 axs[1,2].axis('off')
                 axs[1,2].set_title('|Error (ug/mL)|')
                 plt.tight_layout()
-                if self.save in ['Y','y']:
-                    plot_save_path_DF = plot_save_path + 'num_'+ str(i) + '_' + 'DF_QF.png'
+                if i == 0 and self.save in ['Y','y']:
+                    plot_save_path_DF = plot_save_path + '_depth_' + str(i) +'.png'
                     plt.savefig(plot_save_path_DF, dpi=100, bbox_inches='tight')
                 
 
