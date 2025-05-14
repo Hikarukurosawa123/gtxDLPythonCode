@@ -142,7 +142,7 @@ class ModelInit():
                 ## Depth Fluorescence Output Branch ##
                 #first DF layer 
                 outFL = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outFL)
+                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
 
                 outFL = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(outFL)
