@@ -122,7 +122,7 @@ class ModelInit():
                 Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Conv_5)
                 
-                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
+                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(inFL)
                 Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
 
                 attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
