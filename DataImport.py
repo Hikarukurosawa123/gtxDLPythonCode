@@ -476,7 +476,7 @@ class Operations():
                                     epochs=50, verbose=1, shuffle=True, callbacks=callbackList)     
         else:
 
-            self.history = self.modelD.fit([self.FL], [self.FL],validation_split=0.2,batch_size=self.params['batch'],
+            self.history = self.modelD.fit([self.OP, self.FL], [self.OP, self.FL],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):
