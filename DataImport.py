@@ -178,7 +178,7 @@ class Operations():
             self.FL = np.expand_dims(self.dataset['RE'], axis=0)
 
         #pad with ones temporarily 
-        pad = 0
+        pad = 1
         if pad:
 
             self.DF = np.pad(self.DF, ((0,0), (0, 1), (0, 1)), mode='constant')

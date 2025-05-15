@@ -27,10 +27,33 @@ class ModelInit():
 
                 """The deep learning architecture gets defined here"""
 
-                ## Input Multi-Dimensional Fluorescence ##
+                inOP_beg = Input(shape=(self.params['xX'],self.params['yY'],2))
+
                 inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF']))
 
                 ## NOTE: Batch normalization can cause instability in the validation loss
+
+                #apply mask to OP images
+
+                
+                random_mask = np.random.choice([1, 0], size=(32, self.params['xX'],self.params['yY'],2), p=[1 - 0.5, 0.5])
+                mask = tf.constant(random_mask, dtype=tf.float32)  # shape: (xX, yY, nF, 1)
+
+                def apply_mask(x):
+                        return x * mask
+
+                inOP_beg = Lambda(apply_mask)(inOP_beg)
+
+
+                ## Optical Properties Branch ##
+                inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
+                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
+
+                inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
+                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
+                
+                inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
+                        padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
                 
                 ## Fluorescence Input Branch ##
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
@@ -61,7 +84,10 @@ class ModelInit():
                 ## Concatenate Branch ##
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
 
-                Max_Pool_1 = MaxPool2D()(inFL)
+                concat = concatenate([inOP,inFL],axis=-1)
+
+
+                Max_Pool_1 = MaxPool2D()(concat)
 
                 Conv_1 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Max_Pool_1)
@@ -122,7 +148,7 @@ class ModelInit():
                 Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Conv_5)
                 
-                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(inFL)
+                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
                 Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
 
                 attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
@@ -139,6 +165,17 @@ class ModelInit():
                 Conv_6 = Conv2D(filters=128, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(concat_3)
                 
+                
+                ## Quantitative Fluorescence Output Branch ##
+                outOP = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        activation=self.params['activation'], data_format="channels_last")(Conv_6)
+
+                outOP = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                        activation=self.params['activation'], data_format="channels_last")(outQF) #outQF
+                        
+                outOP = Conv2D(filters=2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
+                                data_format="channels_last")(outOP)
+                
                 ## Depth Fluorescence Output Branch ##
                 #first DF layer 
                 outFL = Conv2D(filters=64, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
@@ -154,10 +191,10 @@ class ModelInit():
                         data_format="channels_last")(outFL)
 
                 ## Defining and compiling the model ##
-                self.modelD = Model(inputs=[inFL_beg], outputs=[outFL])#,outFL])
-                self.modelD.compile(loss=['mae'],
+                self.modelD = Model(inputs=[inOP_beg, inFL_beg], outputs=[outOP, outFL])#,outFL])
+                self.modelD.compile(loss=['mae', 'mae'],
                         optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
-                        metrics=['mae'])
+                        metrics=['mae', 'mae'])
                 self.modelD.summary()
                 return None
 

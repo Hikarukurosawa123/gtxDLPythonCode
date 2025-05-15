@@ -117,7 +117,7 @@ class Helper(Operations):
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 0
+        from_S3 = 1
         
         if from_S3:
             bucket = self.bucket
@@ -188,6 +188,63 @@ class Helper(Operations):
 
         print("loaded")
 
+    def Analysis_single_output(self, save_image = 0):
+        
+        
+        self.import_data_for_testing()
+
+        self.indxIncl = np.nonzero(self.temp_DF_pre_conversion)
+
+        #self.Predict()
+        self.FL = np.array(self.FL) #scale by 2
+
+        FL_predict = self.modelD.predict([self.FL], batch_size = 32)  
+        
+        #FL_predict = self.params['scaleFL']
+
+        self.save = 'n'
+    
+        ## Error Stats
+        # Average error
+        
+        FL_error = FL_predict - self.FL
+        FL_erroravg = np.mean(abs(FL_error[self.indxIncl]))
+        FL_errorstd = np.std(abs(FL_error[self.indxIncl]))
+      
+       
+        for i in range(self.FL.shape[0]):  # Loop over data samples
+            num_channels = self.FL.shape[-1]
+            fig, axs = plt.subplots(2, num_channels, figsize=(4 * num_channels, 6))
+            plt.set_cmap('jet')
+
+            for c in range(num_channels):
+                # Extract data for true and predicted channels
+                true_img = self.FL[i, :, :, c]
+                pred_img = FL_predict[i, :, :, c]
+
+                # Compute 2.5 and 97.5 percentiles for scaling
+                vmin = np.percentile(np.concatenate([true_img.flatten(), pred_img.flatten()]), 2.5)
+                vmax = np.percentile(np.concatenate([true_img.flatten(), pred_img.flatten()]), 97.5)
+
+                # Plot true image
+                im1 = axs[0, c].imshow(true_img, vmin=vmin, vmax=vmax)
+                axs[0, c].axis('off')
+                axs[0, c].set_title(f'True FL - Ch {c+1}', pad=10)
+                plt.colorbar(im1, ax=axs[0, c], fraction=0.046, pad=0.04)
+
+                # Plot predicted image
+                im2 = axs[1, c].imshow(pred_img, vmin=vmin, vmax=vmax)
+                axs[1, c].axis('off')
+                axs[1, c].set_title(f'Predicted FL - Ch {c+1}', pad=10)
+                plt.colorbar(im2, ax=axs[1, c], fraction=0.046, pad=0.04)
+
+            plt.tight_layout()
+            plt.show()
+
+
+            
+    
+        
 
     def Analysis(self, save_image = 0):
         
