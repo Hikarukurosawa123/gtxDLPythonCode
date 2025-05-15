@@ -171,7 +171,7 @@ class ModelInit():
                         activation=self.params['activation'], data_format="channels_last")(Conv_6)
 
                 outOP = Conv2D(filters=32, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(outQF) #outQF
+                        activation=self.params['activation'], data_format="channels_last")(outOP) #outQF
                         
                 outOP = Conv2D(filters=2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                                 data_format="channels_last")(outOP)
