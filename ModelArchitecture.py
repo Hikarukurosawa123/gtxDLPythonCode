@@ -29,20 +29,11 @@ class ModelInit():
 
                 inOP_beg = Input(shape=(self.params['xX'],self.params['yY'],2))
 
-                inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF']))
+                inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF'], 1))
 
                 ## NOTE: Batch normalization can cause instability in the validation loss
 
-                #apply mask to OP images
-
-                
-                random_mask = np.random.choice([1, 0], size=(32, self.params['xX'],self.params['yY'],2), p=[1 - 0.5, 0.5])
-                mask = tf.constant(random_mask, dtype=tf.float32)  # shape: (xX, yY, nF, 1)
-
-                def apply_mask(x):
-                        return x * mask
-
-                inOP_beg = Lambda(apply_mask)(inOP_beg)
+                #apply mask to OP image
 
 
                 ## Optical Properties Branch ##
@@ -59,15 +50,6 @@ class ModelInit():
                 #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
                 input_shape = inFL_beg.shape
                         
-                random_mask = np.random.choice([1, 0], size=(32, self.params['xX'],self.params['yY'],self.params['nF']), p=[1 - 0.5, 0.5])
-                mask = tf.constant(random_mask, dtype=tf.float32)  # shape: (xX, yY, nF, 1)
-
-                def apply_mask(x):
-                        return x * mask
-
-                inFL_beg = Lambda(apply_mask)(inFL_beg)
-
-                inFL_beg = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], inFL_beg.shape[3], 1))(inFL_beg)
 
 
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
@@ -111,8 +93,8 @@ class ModelInit():
                 #decoder 
 
                 #adjust size of Conv_2
-                long_path_1 = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
-                attention_1 = self.attention_gate(long_path_1, Conv_3, 512)
+                #long_path_1 = Conv_2[:,0:Conv_2.shape[1] - 1, 0:Conv_2.shape[2] - 1, :]
+                #attention_1 = self.attention_gate(long_path_1, Conv_3, 512)
 
                 Up_conv_1 = UpSampling2D()(Conv_3)
 
@@ -121,18 +103,18 @@ class ModelInit():
                         activation=self.params['activation'], data_format="channels_last")(Up_conv_1)
 
                 #attention block 
-                concat_1 = concatenate([Up_conv_1,attention_1],axis=-1)
+                #concat_1 = concatenate([Up_conv_1,attention_1],axis=-1)
 
                 Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_1)
+                        activation=self.params['activation'], data_format="channels_last")(Up_conv_1)
 
                 Conv_4 = Conv2D(filters=512, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                                 activation=self.params['activation'], data_format="channels_last")(Conv_4)
                 
-                long_path_2 = Conv_1
+                #long_path_2 = Conv_1
                 Conv_4_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_4)
 
-                attention_2 = self.attention_gate(long_path_2, Conv_4_zero_pad, 256)
+                #attention_2 = self.attention_gate(long_path_2, Conv_4_zero_pad, 256)
 
                 Up_conv_2 = UpSampling2D()(Conv_4)
 
@@ -141,17 +123,17 @@ class ModelInit():
 
                 Up_conv_2 = ZeroPadding2D()(Up_conv_2)
 
-                concat_2 = concatenate([Up_conv_2,attention_2],axis=-1)
+                #concat_2 = concatenate([Up_conv_2,attention_2],axis=-1)
 
                 Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_2)
+                        activation=self.params['activation'], data_format="channels_last")(Up_conv_2)
                 Conv_5 = Conv2D(filters=256, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
                         activation=self.params['activation'], data_format="channels_last")(Conv_5)
                 
-                long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
-                Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
+                #long_path_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(concat)
+                #Conv_5_zero_pad = ZeroPadding2D(padding = ((1,0), (1,0)))(Conv_5)
 
-                attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
+                #attention_3 = self.attention_gate(long_path_3, Conv_5_zero_pad, 128)
 
                 Up_conv_3 = UpSampling2D()(Conv_5)
                 Up_conv_3 = Conv2D(filters=128, kernel_size = (2,2), strides=(1,1), padding='same', 
@@ -159,11 +141,11 @@ class ModelInit():
                                 
                 Up_conv_3 = ZeroPadding2D(padding = ((1,0), (1,0)))(Up_conv_3)
 
-                attention_3 = attention_3[:,0:attention_3.shape[1] - 1, 0:attention_3.shape[2] - 1, :]
-                concat_3 = concatenate([Up_conv_3,attention_3],axis=-1)  
+                #attention_3 = attention_3[:,0:attention_3.shape[1] - 1, 0:attention_3.shape[2] - 1, :]
+                #concat_3 = concatenate([Up_conv_3,attention_3],axis=-1)  
 
                 Conv_6 = Conv2D(filters=128, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                        activation=self.params['activation'], data_format="channels_last")(concat_3)
+                        activation=self.params['activation'], data_format="channels_last")(Up_conv_3)
                 
                 
                 ## Quantitative Fluorescence Output Branch ##
@@ -197,6 +179,4 @@ class ModelInit():
                         metrics=['mae', 'mae'])
                 self.modelD.summary()
                 return None
-
-
 

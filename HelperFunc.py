@@ -188,58 +188,92 @@ class Helper(Operations):
 
         print("loaded")
 
-    def Analysis_single_output(self, save_image = 0):
-        
-        
-        self.import_data_for_testing()
+    def Analysis_auto_encoder_output(self, save_image=0):
 
+        self.import_data_for_testing()
         self.indxIncl = np.nonzero(self.temp_DF_pre_conversion)
 
-        #self.Predict()
-        self.FL = np.array(self.FL) #scale by 2
+        self.FL = np.array(self.FL)
+        self.OP = np.array(self.OP)
 
-        FL_predict = self.modelD.predict([self.FL], batch_size = 32)  
-        
-        #FL_predict = self.params['scaleFL']
+        predict = self.modelD.predict([self.OP, self.FL], batch_size=32)
 
-        self.save = 'n'
-    
-        ## Error Stats
-        # Average error
-        
+        OP_predict=  predict[0]
+        FL_predict = predict[1]  # FL output
+
+        print("OP_predict", OP_predict.shape)
+        print("FL_predict", FL_predict.shape)
+
+
+        self.save = 'y' if save_image else 'n'
+
+        # Error Stats
         FL_error = FL_predict - self.FL
         FL_erroravg = np.mean(abs(FL_error[self.indxIncl]))
         FL_errorstd = np.std(abs(FL_error[self.indxIncl]))
-      
-       
-        for i in range(self.FL.shape[0]):  # Loop over data samples
-            num_channels = self.FL.shape[-1]
-            fig, axs = plt.subplots(2, num_channels, figsize=(4 * num_channels, 6))
+
+        plot_save_path = os.path.join('./predictions/' + self.folder_name)
+
+
+        for i in range(self.FL.shape[0]):
+            fl_channels = self.FL.shape[-1]  # 6
+
+            fig, axs = plt.subplots(2, fl_channels, figsize=(4 * fl_channels, 6))
             plt.set_cmap('jet')
 
-            for c in range(num_channels):
-                # Extract data for true and predicted channels
+            for c in range(fl_channels):
+                # Top row: True FL
                 true_img = self.FL[i, :, :, c]
-                pred_img = FL_predict[i, :, :, c]
-
-                # Compute 2.5 and 97.5 percentiles for scaling
-                vmin = np.percentile(np.concatenate([true_img.flatten(), pred_img.flatten()]), 2.5)
-                vmax = np.percentile(np.concatenate([true_img.flatten(), pred_img.flatten()]), 97.5)
-
-                # Plot true image
+                vmin = np.percentile(true_img.flatten(), 2.5)
+                vmax = np.percentile(true_img.flatten(), 97.5)
                 im1 = axs[0, c].imshow(true_img, vmin=vmin, vmax=vmax)
                 axs[0, c].axis('off')
-                axs[0, c].set_title(f'True FL - Ch {c+1}', pad=10)
+                axs[0, c].set_title(f'True FL - Ch {c + 1}')
                 plt.colorbar(im1, ax=axs[0, c], fraction=0.046, pad=0.04)
 
-                # Plot predicted image
+                # Bottom row: Predicted FL
+                pred_img = FL_predict[i, :, :, c]
+                vmin = np.percentile(pred_img.flatten(), 2.5)
+                vmax = np.percentile(pred_img.flatten(), 97.5)
                 im2 = axs[1, c].imshow(pred_img, vmin=vmin, vmax=vmax)
                 axs[1, c].axis('off')
-                axs[1, c].set_title(f'Predicted FL - Ch {c+1}', pad=10)
+                axs[1, c].set_title(f'Pred FL - Ch {c + 1}')
                 plt.colorbar(im2, ax=axs[1, c], fraction=0.046, pad=0.04)
 
             plt.tight_layout()
             plt.show()
+
+            if self.save in ['y', 'Y']:
+                plot_save_combined = os.path.join(plot_save_path + f'_depth_{i}_FL_vertical.png')
+                plt.savefig(plot_save_combined, dpi=100, bbox_inches='tight')
+            plt.close()
+
+        for i in range(self.OP.shape[0]):
+            op_channels = self.OP.shape[-1]  # 2
+
+            fig, axs = plt.subplots(2, op_channels, figsize=(4 * op_channels, 6))
+            plt.set_cmap('jet')
+
+            for c in range(op_channels):
+                # Top row: True OP
+                true_img = self.OP[i, :, :, c]
+                vmin = np.percentile(true_img.flatten(), 2.5)
+                vmax = np.percentile(true_img.flatten(), 97.5)
+                im1 = axs[0, c].imshow(true_img, vmin=vmin, vmax=vmax)
+                axs[0, c].axis('off')
+                axs[0, c].set_title(f'True OP - Ch {c + 1}')
+                plt.colorbar(im1, ax=axs[0, c], fraction=0.046, pad=0.04)
+
+                # Bottom row: Predicted OP
+                pred_img = OP_predict[i, :, :, c]
+                vmin = np.percentile(pred_img.flatten(), 2.5)
+                vmax = np.percentile(pred_img.flatten(), 97.5)
+                im2 = axs[1, c].imshow(pred_img, vmin=vmin, vmax=vmax)
+                axs[1, c].axis('off')
+                axs[1, c].set_title(f'Pred OP - Ch {c + 1}')
+                plt.colorbar(im2, ax=axs[1, c], fraction=0.046, pad=0.04)
+
+
 
 
             
@@ -354,7 +388,7 @@ class Helper(Operations):
         plt.xlabel("True Depth (mm)")
         plt.title("Minimum Depth")
         plt.tight_layout()
-        font = {'weight': 'bold', 'size':12}
+        font = {'weight': 'bold', 'size':20}
         matplotlib.rc('font', **font)
 
         min_depth_graph.show()
