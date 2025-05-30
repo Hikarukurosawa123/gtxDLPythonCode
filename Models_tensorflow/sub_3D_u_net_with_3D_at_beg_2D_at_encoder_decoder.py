@@ -1,4 +1,24 @@
-def Model(self):
+from tensorflow.keras.models import Model
+from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU, Lambda
+from tensorflow import keras
+
+class UnetModel():
+    def __init__(self, params):
+        self.params = params
+        self.modelD = None
+
+    #helper function: attention gate 
+    def attention_gate(self, g, s, num_filters):
+        Wg = Conv2D(num_filters, 1, strides = (2,2), padding="valid")(g)
+        Ws = Conv2D(num_filters, 1, padding="same")(s)
+
+        out = Activation("relu")(Wg + Ws)
+        out = Conv2D(1, 1, padding="same")(out)
+        out = Activation("sigmoid")(out)
+        out = UpSampling2D()(out)
+        return out * g
+
+    def build_model(self):        
         """The deep learning architecture gets defined here"""
         
         # Input Optical Properties ##
@@ -25,12 +45,10 @@ def Model(self):
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
         input_shape = inFL_beg.shape
-        print(input_shape)
 
         inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
         inFL = Dropout(0.5)(inFL)
-        print(inFL.shape)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
@@ -153,4 +171,4 @@ def Model(self):
                 optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
                 metrics=['mae', 'mae'])
         self.modelD.summary()
-        return None
+        return self.modelD 

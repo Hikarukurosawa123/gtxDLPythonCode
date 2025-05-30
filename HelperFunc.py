@@ -117,7 +117,7 @@ class Helper(Operations):
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 1
+        from_S3 = 0
         
         if from_S3:
             bucket = self.bucket
@@ -201,6 +201,13 @@ class Helper(Operations):
         OP_predict=  predict[0]
         FL_predict = predict[1]  # FL output
 
+        use_predict = 1
+
+        if use_predict:
+            self.OP = OP_predict
+            self.FL = FL_predict
+
+
         print("OP_predict", OP_predict.shape)
         print("FL_predict", FL_predict.shape)
 
@@ -282,8 +289,9 @@ class Helper(Operations):
 
     def Analysis(self, save_image = 0):
         
-        
-        self.import_data_for_testing()
+        use_same_data = 0
+        if not use_same_data:
+            self.import_data_for_testing()
 
         self.indxIncl = np.nonzero(self.temp_DF_pre_conversion)
 
@@ -368,29 +376,33 @@ class Helper(Operations):
 
 
         min_depth_graph = plt.figure()
+
+        #compute R^2 
+        from sklearn.metrics import r2_score
+        print("R2: ", r2_score(DF_min, DFP_min))
         
-        plt.scatter(DF_min,DFP_min,s=3, label =  "Correct Classification", color = ['blue'])
+        plt.scatter(DF_min,DFP_min,s=3, label =  "Correct Classification", color = ['red'])
 
         DF_min_classify = np.array(DF_min) < 5 
         DFP_min_classify = np.array(DFP_min) < 5
         
         failed_result = DF_min_classify !=DFP_min_classify
         failed_result = np.squeeze(failed_result)
-        print(np.shape(failed_result))
         
-        plt.scatter(DF_min[failed_result],DFP_min[failed_result],label = "Incorrect Classification", s=3, color = ['red'])
-        plt.legend(loc="upper left", prop={'size': 13, 'weight':'bold'})
+        #plt.scatter(DF_min[failed_result],DFP_min[failed_result],label = "Incorrect Classification", s=3, color = ['red'])
+        #plt.legend(loc="upper left", prop={'size': 13, 'weight':'bold'})
+
+        font = {'family': 'Times New Roman', 'weight': 'bold', 'size':20}
+        matplotlib.rc('font', **font)
 
         plt.xlim([0, 10])
         plt.ylim([0, 10])
-        plt.plot(plt.xlim([0, 10]), plt.ylim([0, 10]),color='k')
+        plt.plot(plt.xlim([0, 10]), plt.ylim([0, 10]),linestyle='dashed', linewidth=3, color = 'b')
         plt.ylabel("Predicted Depth (mm)")
         plt.xlabel("True Depth (mm)")
-        plt.title("Minimum Depth")
+        #plt.title("Minimum Depth")
         plt.tight_layout()
-        font = {'weight': 'bold', 'size':20}
-        matplotlib.rc('font', **font)
-
+        
         min_depth_graph.show()
         
 
@@ -399,74 +411,70 @@ class Helper(Operations):
             self.save = 'y'
         plot_save_path =  os.path.join('./predictions/' + self.folder_name)
 
-        if self.DF.shape[0] < 10:
-            for i in range(self.DF.shape[0]):
-                fig, axs = plt.subplots(2,3)
-                plt.set_cmap('jet')
-                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04)
-                
-                
-                axs[0,0].axis('off')
-                axs[0,0].set_title('True Depth (mm)', pad = 10)
-                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04)
-                axs[0,1].axis('off')
-                axs[0,1].set_title('Predicted Depth (mm)', pad = 10)
-                
-                print(np.shape(DF_error))
-                plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=15), ax=axs[0, 2],fraction=0.046, pad=0.04)
-                axs[0,2].axis('off')
-                axs[0,2].set_title('|Error (mm)|', pad = 10)
-                plt.colorbar(axs[1,0].imshow(self.QF[i,:,:],vmin=0,vmax=10), ax=axs[1, 0],fraction=0.046, pad=0.04)
-                axs[1,0].axis('off')
-                axs[1,0].set_title('True Conc (ug/mL)', pad = 10)
-                plt.colorbar(axs[1,1].imshow(QF_P[i,:,:],vmin=0,vmax=10), ax=axs[1, 1],fraction=0.046, pad=0.04)
-                axs[1,1].axis('off')
-                axs[1,1].set_title('Predicted Conc (ug/mL)', pad = 10)
-                plt.colorbar(axs[1,2].imshow(abs(QF_error[i,:,:]),vmin=0,vmax=10), ax=axs[1, 2],fraction=0.046, pad=0.04)
-                axs[1,2].axis('off')
-                axs[1,2].set_title('|Error (ug/mL)|', pad = 10)
-                plt.tight_layout()   
-                if self.save in ['Y','y']:
-                    plot_save_path_DF = plot_save_path + '_depth_' + str(i) +'_DF_QF.png'
-                    plt.savefig(plot_save_path_DF, dpi=100, bbox_inches='tight')
-                plt.show()
-        else:
+        
             
-            for i in range(np.shape(self.DF)[0]):#range(num_plot_display):
-                print("DF, DF pred: ", DF_min[i], DFP_min[i])
-                fig, axs = plt.subplots(2,3)
-                plt.set_cmap('jet')
-                plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04)
-                
-
-                axs[0,0].axis('off')
-                axs[0,0].set_title('True Depth (mm)')
+        for i in range(np.shape(self.DF)[0]):#np.shape(self.DF)[0]#range(num_plot_display):
+            print("DF, DF pred: ", DF_min[i], DFP_min[i])
+            fig, axs = plt.subplots(2,3)
+            plt.set_cmap('jet')
+            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
             
-                
-                plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04)
-                axs[0,1].axis('off')
-                axs[0,1].set_title('Predicted Depth (mm)')
-                plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=15), ax=axs[0, 2],fraction=0.046, pad=0.04)
-                axs[0,2].axis('off')
-                axs[0,2].set_title('|Error (mm)|')
-                plt.colorbar(axs[1,0].imshow(self.QF[i,:,:],vmin=0,vmax=10), ax=axs[1, 0],fraction=0.046, pad=0.04)
-                axs[1,0].axis('off')
-                axs[1,0].set_title('True Conc (ug/mL)')
-                plt.colorbar(axs[1,1].imshow(QF_P[i,:,:],vmin=0,vmax=10), ax=axs[1, 1],fraction=0.046, pad=0.04)
-                axs[1,1].axis('off')
-                axs[1,1].set_title('Predicted Conc (ug/mL)')
-                plt.colorbar(axs[1,2].imshow(abs(QF_error[i,:,:]),vmin=0,vmax=10), ax=axs[1, 2],fraction=0.046, pad=0.04)
-                #axs[0,2].text(5, 5, 'min_depth error = ' + str(temp_value_str_1 - temp_value_str_2), bbox={'facecolor': 'white', 'pad': 4}, size = 'x-small')
 
-                axs[1,2].axis('off')
-                axs[1,2].set_title('|Error (ug/mL)|')
-                plt.tight_layout()
-                if i == 0 and self.save in ['Y','y']:
-                    plot_save_path_DF = plot_save_path + '_depth_' + str(i) +'.png'
-                    plt.savefig(plot_save_path_DF, dpi=100, bbox_inches='tight')
-                
+            axs[0,0].axis('off')
+            axs[0,0].set_title('True Depth (mm)')
+        
+            
+            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
+            axs[0,1].axis('off')
+            axs[0,1].set_title('Predicted Depth (mm)')
+            plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=10), ax=axs[0, 2],fraction=0.046, pad=0.04)
+            axs[0,2].axis('off')
+            axs[0,2].set_title('|Error (mm)|')
+            plt.colorbar(axs[1,0].imshow(self.QF[i,:,:],vmin=0,vmax=10), ax=axs[1, 0],fraction=0.046, pad=0.04)
+            axs[1,0].axis('off')
+            axs[1,0].set_title('True Conc (ug/mL)')
+            plt.colorbar(axs[1,1].imshow(QF_P[i,:,:],vmin=0,vmax=10), ax=axs[1, 1],fraction=0.046, pad=0.04)
+            axs[1,1].axis('off')
+            axs[1,1].set_title('Predicted Conc (ug/mL)')
+            plt.colorbar(axs[1,2].imshow(abs(QF_error[i,:,:]),vmin=0,vmax=10), ax=axs[1, 2],fraction=0.046, pad=0.04)
+            #axs[0,2].text(5, 5, 'min_depth error = ' + str(temp_value_str_1 - temp_value_str_2), bbox={'facecolor': 'white', 'pad': 4}, size = 'x-small')
 
-                plt.show()
+            axs[1,2].axis('off')
+            axs[1,2].set_title('|Error (ug/mL)|')
+            plt.tight_layout()
+                            
+            if self.save in ['Y', 'y']:
+                # Define base name
+                base_filename = plot_save_path + f'_sample_{i}_'
+                cmap = 'jet'
+                
+                def save_with_colorbar(data, vmin, vmax, title, filename, ticks=None):
+                    fig, ax = plt.subplots()
+                    cax = ax.imshow(data, vmin=vmin, vmax=vmax, cmap=cmap)
+                    cbar = plt.colorbar(cax, ax=ax, fraction=0.046, pad=0.04)
+                    #cbar.ax.tick_params(labelsize=10, labelfontfamily = 'bold')  # Set tick label font size
+
+                    if ticks:
+                        cbar.set_ticks(ticks)
+                    
+                    cbar.ax.set_yticklabels(ticks, fontsize=30, fontweight='bold')
+
+                    #ax.set_title(title, fontsize=16, fontweight='bold', fontname='Times New Roman')
+                    ax.axis('off')
+                    plt.tight_layout()
+                    plt.savefig(filename, dpi=100, bbox_inches='tight')
+                    plt.close(fig)  # Close the figure to free memory
+
+                # Save plots with colorbars
+                save_with_colorbar(self.DF[i, :, :], 0, 15, 'True Depth (mm)', base_filename + 'true_depth.png', ticks=[0, 5, 10, 15])
+                save_with_colorbar(DF_P[i, :, :], 0, 15, 'Predicted Depth (mm)', base_filename + 'predicted_depth.png', ticks=[0, 5, 10, 15])
+                save_with_colorbar(abs(DF_error[i, :, :]), 0, 10, '|Depth Error| (mm)', base_filename + 'depth_error.png', ticks=[0, 5, 10])
+                save_with_colorbar(self.QF[i, :, :], 0, 10, 'True Conc (μg/mL)', base_filename + 'true_conc.png', ticks=[0, 5, 10])
+                save_with_colorbar(QF_P[i, :, :], 0, 10, 'Predicted Conc (μg/mL)', base_filename + 'predicted_conc.png', ticks=[0, 5, 10])
+                save_with_colorbar(abs(QF_error[i, :, :]), 0, 10, '|Conc Error| (μg/mL)', base_filename + 'conc_error.png', ticks=[0, 5, 10])
+                            
+
+            plt.show()
         
     def PrintFeatureMap(self):
         """Generate Feature Maps"""
