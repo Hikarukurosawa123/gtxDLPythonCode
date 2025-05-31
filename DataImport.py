@@ -161,7 +161,7 @@ class Operations():
     
         self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
   
-        apply_normalization = 1
+        apply_normalization =1
 
         self.FL = self.dataset['F']
        
@@ -180,7 +180,7 @@ class Operations():
             self.FL = np.expand_dims(self.dataset['RE'], axis=0)
 
         #pad with ones temporarily 
-        pad = 0
+        pad = 1
         if pad:
 
             self.DF = np.pad(self.DF, ((0,0), (0, 1), (0, 1)), mode='constant')
@@ -478,7 +478,7 @@ class Operations():
                                     epochs=50, verbose=1, shuffle=True, callbacks=callbackList)     
         else:
 
-            self.history = self.modelD.fit([self.OP, self.FL], [self.QF self.DF],validation_split=0.2,batch_size=self.params['batch'],
+            self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):

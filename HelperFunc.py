@@ -112,19 +112,25 @@ class Helper(Operations):
 
         s3_client = boto3.client('s3')
 
+        print("inside")
+
         keras_files = []
         
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 0
+        from_S3 = 1
         
         if from_S3:
             bucket = self.bucket
             folder = "ModelParameters"
             s3 = boto3.resource("s3")
             s3_bucket = s3.Bucket(bucket)
-            files_in_s3 = [f.key.split(folder + "/")[1] for f in s3_bucket.objects.filter(Prefix=folder).all()]
+            files_in_s3 = []
+            for f in s3_bucket.objects.filter(Prefix=folder).all():
+                key_parts = f.key.split(folder + "/")
+                if len(key_parts) > 1 and key_parts[1]:  # skip root folder or malformed keys
+                    files_in_s3.append(key_parts[1])
 
             #filter files 
             for file in files_in_s3:
@@ -298,6 +304,8 @@ class Helper(Operations):
         #self.Predict()
         self.OP = np.array(self.OP)
         self.FL = np.array(self.FL) #scale by 2
+
+        print(self.OP.shape, self.FL.shape)
 
 
         predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
