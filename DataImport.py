@@ -161,7 +161,8 @@ class Operations():
     
         self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
   
-        apply_normalization =1
+        apply_normalization =0
+        apply_min_max_normalization = 1
 
         self.FL = self.dataset['F']
        
@@ -179,16 +180,7 @@ class Operations():
             self.RE = np.expand_dims(self.dataset['RE'], axis=0)
             self.FL = np.expand_dims(self.dataset['RE'], axis=0)
 
-        #pad with ones temporarily 
-        pad = 1
-        if pad:
-
-            self.DF = np.pad(self.DF, ((0,0), (0, 1), (0, 1)), mode='constant')
-            self.OP = np.pad(self.OP, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
-            self.QF = np.pad(self.QF, ((0,0),(0, 1), (0, 1)), mode='constant')
-            self.RE = np.pad(self.RE, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
-            self.FL = np.pad(self.FL, ((0,0),(0, 1), (0, 1), (0,0)), mode='constant')
-
+        
 
     
         self.temp_DF_pre_conversion = self.DF
@@ -198,6 +190,29 @@ class Operations():
             self.background_val = 0 #default to zero
         
         self.convert_background_val() #convert values of DF background
+
+
+        #pad with ones temporarily 
+        pad = 0
+
+        def pad_with_sample_mean(arr, pad_width, is_4d=False):
+            padded = []
+            for i in range(arr.shape[0]):
+                sample = arr[i]
+                sample_mean = sample.mean()
+                if is_4d:
+                    padded_sample = np.pad(sample, pad_width=((0, 1), (0, 1), (0, 0)), mode='constant', constant_values=sample_mean)
+                else:
+                    padded_sample = np.pad(sample, pad_width=((0, 1), (0, 1)), mode='constant', constant_values=sample_mean)
+                padded.append(padded_sample)
+            return np.stack(padded)
+
+        if pad:
+            self.DF = pad_with_sample_mean(self.DF, pad_width=((0, 1), (0, 1)), is_4d=False)
+            self.QF = pad_with_sample_mean(self.QF, pad_width=((0, 1), (0, 1)), is_4d=False)
+            self.OP = pad_with_sample_mean(self.OP, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
+            self.RE = pad_with_sample_mean(self.RE, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
+            self.FL = pad_with_sample_mean(self.FL, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
 
         # Check whether the user is using the single or multiple MAT format 
         # I.e., looking at individual MAT files (getDims=3) or looking at MAT files with more than one sample (getDim=4)
@@ -293,6 +308,21 @@ class Operations():
                 self.OP = np.array(self.OP)
 
                 self.OP = (self.OP - OP_mean) / OP_std
+
+
+            
+            if apply_min_max_normalization:
+                # Apply min-max normalization on FL
+                FL_min = np.min(self.FL, axis=(1, 2, 3), keepdims=True)
+                FL_max = np.max(self.FL, axis=(1, 2, 3), keepdims=True)
+                self.FL = np.array(self.FL)
+                self.FL = (self.FL - FL_min) / (FL_max - FL_min + 1e-8)  # add epsilon to avoid division by zero
+
+                # Apply min-max normalization on OP
+                OP_min = np.min(self.OP, axis=(1, 2, 3), keepdims=True)
+                OP_max = np.max(self.OP, axis=(1, 2, 3), keepdims=True)
+                self.OP = np.array(self.OP)
+                self.OP = (self.OP - OP_min) / (OP_max - OP_min + 1e-8)
 
 
             

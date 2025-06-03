@@ -26,7 +26,7 @@ from os.path import isfile, join
 import time
 import tempfile
 import os
-
+import numpy as np 
 #from DataImport import MyDataset
 class MonteCarloDropout(Dropout):
     def call(self, inputs):
