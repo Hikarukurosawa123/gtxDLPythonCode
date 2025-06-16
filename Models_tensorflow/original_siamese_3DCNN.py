@@ -131,7 +131,9 @@ class Siamese():
 
             #reshape to allow 2D conv 
 
-            inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
+            print(inFL.shape)
+
+            inFL = Reshape((self.params['xX'],self.params['yY'],self.params['nF']))(inFL)
 
             inFL = self.resblock_2D(int(self.params['nFilters2D']/2), self.params['kernelResBlock2D'], self.params['strideConv2D'], inFL)
             
