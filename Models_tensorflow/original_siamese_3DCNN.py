@@ -84,10 +84,13 @@ class Siamese():
             inOP = Dropout(0.5)(inOP)
 
             ## Fluorescence Input Branch ##
+        
+            inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF'], 1))
+
             input_shape = inFL_beg.shape
 
             #reshape to allow 3D conv 
-            inFL = Reshape(shape = (self.params['xX'],self.params['yY'],1, self.params['nF']))(inFL_beg)
+            #inFL = Reshape(shape = (self.params['xX'],self.params['yY'],1, self.params['nF']))(inFL_beg)
             inFL = Conv3D(filters=self.params['nFilters3D'], kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                             padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
             inFL = BatchNormalization()(inFL)
