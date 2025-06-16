@@ -1,10 +1,15 @@
-class ModelInit():  
+from tensorflow.keras.models import Model
+from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU, Lambda
+from tensorflow import keras
+
+
+class Siamese():  
         def drop_out(self, x, drop_out = None):
             if drop_out: 
                 x = Dropout(drop_out)(x, training = True)
         
             return x 
-        def Model(self):
+        def build_model(self):
             """The deep learning architecture gets defined here"""
             
             ## Input Optical Properties ##
@@ -19,6 +24,8 @@ class ModelInit():
             inOP = Conv2D(filters=self.params['nFilters2D'], kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                             padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
             inOP = BatchNormalization()(inOP)  
+
+            inOP = Dropout(0.5)(inOP)
             
 
             inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
@@ -26,13 +33,21 @@ class ModelInit():
             
 
             inOP = BatchNormalization()(inOP)
+
+            inOP = Dropout(0.5)(inOP)
+
             inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                             padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
             
 
             inOP = BatchNormalization()(inOP)
+
+            inOP = Dropout(0.5)(inOP)
+
             inOP = self.resblock_2D(int(self.params['nFilters2D']/2), self.params['kernelResBlock2D'], self.params['strideConv2D'], inOP)
-            
+
+            inOP = Dropout(0.5)(inOP)
+
             ## Fluorescence Input Branch ##
             input_shape = inFL_beg.shape
 
@@ -41,6 +56,9 @@ class ModelInit():
             inFL = Conv3D(filters=self.params['nFilters3D'], kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                             padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
             inFL = BatchNormalization()(inFL)
+
+            inFL = Dropout(0.5)(inFL)
+
             #inFL = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
             #                padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
 
@@ -49,6 +67,9 @@ class ModelInit():
             
 
             inFL = BatchNormalization()(inFL)
+
+            inFL = Dropout(0.5)(inFL)
+
             #inFL = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
             #                padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
             
@@ -56,23 +77,28 @@ class ModelInit():
                             padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
             
             inFL = BatchNormalization()(inFL)
+            inFL = Dropout(0.5)(inFL)
 
             inFL = Conv3D(filters=self.params['nFilters3D'], kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                             padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
             
             inFL = BatchNormalization()(inFL)
+            inFL = Dropout(0.5)(inFL)
 
             inFL = Conv3D(filters=self.params['nFilters3D'], kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                             padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL)
             
             inFL = BatchNormalization()(inFL)
+            inFL = Dropout(0.5)(inFL)
 
             #reshape to allow 2D conv 
 
             inFL = Reshape(shape = (self.params['xX'],self.params['yY'],self.params['nF']))(inFL)
 
             inFL = self.resblock_2D(int(self.params['nFilters2D']/2), self.params['kernelResBlock2D'], self.params['strideConv2D'], inFL)
-       
+            
+            inFL = Dropout(0.5)(inFL)
+
             ## Concatenate Branch ##
             concat = concatenate([inOP,inFL],axis=-1)
             

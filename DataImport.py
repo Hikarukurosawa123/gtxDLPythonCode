@@ -162,7 +162,7 @@ class Operations():
         self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
   
         apply_normalization =0
-        apply_min_max_normalization = 1
+        apply_min_max_normalization = 0
 
         self.FL = self.dataset['F']
        
