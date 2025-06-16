@@ -4,6 +4,11 @@ from tensorflow import keras
 
 
 class Siamese():  
+        
+        def __init__(self, params):
+            self.params = params
+            self.modelD = None
+            
         def drop_out(self, x, drop_out = None):
             if drop_out: 
                 x = Dropout(drop_out)(x, training = True)
