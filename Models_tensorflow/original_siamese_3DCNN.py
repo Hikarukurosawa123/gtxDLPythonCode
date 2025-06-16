@@ -2,8 +2,8 @@ from tensorflow.keras.models import Model
 from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU, Lambda
 from tensorflow import keras
 
-
 class Siamese():  
+    
         
         def __init__(self, params):
             self.params = params
@@ -14,6 +14,36 @@ class Siamese():
                 x = Dropout(drop_out)(x, training = True)
         
             return x 
+        
+
+    
+        def resblock_2D(self, num_filters, size_filter, stride_filter, x):
+            """Residual block for 2D input excluding batch normalization layers"""
+            Fx = Conv2D(filters=num_filters, kernel_size=size_filter, strides=stride_filter,padding='same', activation='relu', 
+                        data_format="channels_last")(x)
+            Fx = Conv2D(filters=num_filters, kernel_size=size_filter, padding='same', activation='relu', data_format="channels_last")(Fx)
+            output = add([Fx, x])
+            return output
+
+        def resblock_2D_BN(self,num_filters, size_filter, stride_filter, x):
+            """Residual block for 2D input including batch normalization layers"""
+            Fx = Conv2D(filters=num_filters, kernel_size=size_filter, strides=stride_filter, padding='same', activation='relu', 
+                        data_format="channels_last")(x)
+            Fx = BatchNormalization()(Fx)
+            Fx = Conv2D(filters=num_filters, kernel_size=size_filter, strides=stride_filter, padding='same', activation='relu', 
+                        data_format="channels_last")(Fx)
+            Fx = BatchNormalization()(Fx)
+            output = add([Fx, x])
+            return output
+
+        def resblock_3D(self,num_filters, size_filter, stride_filter, x):
+            """Residual block for 3D input excluding batch normalization layers"""
+            Fx = Conv3D(filters=num_filters, kernel_size=size_filter, strides=stride_filter, padding='same', activation='relu', 
+                        data_format="channels_last")(x)
+            Fx = Conv3D(filters=num_filters, kernel_size=size_filter, strides=stride_filter, padding='same', activation='relu', 
+                        data_format="channels_last")(Fx)
+            output = add([Fx, x])
+            return output
         def build_model(self):
             """The deep learning architecture gets defined here"""
             
