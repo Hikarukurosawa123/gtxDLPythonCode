@@ -423,6 +423,7 @@ class Helper(Operations):
             
         for i in range(np.shape(self.DF)[0]):#np.shape(self.DF)[0]#range(num_plot_display):
             print("DF, DF pred: ", DF_min[i], DFP_min[i])
+            print("index_num: ", i)
             fig, axs = plt.subplots(2,3)
             plt.set_cmap('jet')
             plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
