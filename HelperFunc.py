@@ -382,7 +382,8 @@ class Helper(Operations):
         plt.show()
        
 
-
+        font = {'family': 'DejaVu Sans', 'weight': 'bold', 'size':20}
+        matplotlib.rc('font', **font)
         min_depth_graph = plt.figure()
 
         #compute R^2 
@@ -400,8 +401,7 @@ class Helper(Operations):
         #plt.scatter(DF_min[failed_result],DFP_min[failed_result],label = "Incorrect Classification", s=3, color = ['red'])
         #plt.legend(loc="upper left", prop={'size': 13, 'weight':'bold'})
 
-        font = {'family': 'Times New Roman', 'weight': 'bold', 'size':20}
-        matplotlib.rc('font', **font)
+   
 
         plt.xlim([0, 10])
         plt.ylim([0, 10])
@@ -451,8 +451,9 @@ class Helper(Operations):
             axs[1,2].set_title('|Error (ug/mL)|')
             plt.tight_layout()
                             
-            if self.save in ['Y', 'y']:
+            if self.save in ['Y', 'y'] and i == 2:
                 # Define base name
+                print("inside")
                 base_filename = plot_save_path + f'_sample_{i}_'
                 cmap = 'jet'
                 
