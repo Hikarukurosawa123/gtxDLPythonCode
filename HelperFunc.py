@@ -95,12 +95,8 @@ class Helper(Operations):
         QF_min_per_case = np.max(QF_zeros, axis = (1,2))
 
         return QF_min_per_case
-    
-    def convert_background_val(self):
-        self.DF = np.array(self.DF)
-        mask = self.DF == 0
-        self.DF[mask] = self.background_val
-        
+
+
     def import_data_for_testing(self):
         
         self.importData(isTesting=True,quickTest=True)

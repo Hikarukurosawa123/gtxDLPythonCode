@@ -110,6 +110,13 @@ class Operations():
                 print('Key does not exist; valid key values are printed in the dictionary above. Enter nothing to finish. ')
                 break
         return None    
+    
+
+    def convert_background_val(self):
+        self.DF = np.array(self.DF)
+        self.mask = self.DF == 0
+        self.DF[self.mask] = self.background_val
+        
     def importData(self,isTesting=True,quickTest=False):
 
         #determine where to import testing/training data from 
