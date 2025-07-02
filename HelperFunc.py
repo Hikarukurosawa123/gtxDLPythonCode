@@ -98,15 +98,13 @@ class Helper(Operations):
     
     def convert_background_val(self):
         self.DF = np.array(self.DF)
-   
-        for x in range(self.DF.shape[0]):
-            ind_zeros = self.DF[x, :,:] == 0
-            self.DF[x,ind_zeros] = self.background_val
-   
+        mask = self.DF == 0
+        self.DF[mask] = self.background_val
+        
     def import_data_for_testing(self):
         
         self.importData(isTesting=True,quickTest=True)
-    
+
         
     def load(self):
 
@@ -426,14 +424,14 @@ class Helper(Operations):
             print("index_num: ", i)
             fig, axs = plt.subplots(2,3)
             plt.set_cmap('jet')
-            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
+            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=10), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 3, 10, 15])
             
 
             axs[0,0].axis('off')
             axs[0,0].set_title('True Depth (mm)')
         
             
-            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
+            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=10), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0, 3, 10, 15])
             axs[0,1].axis('off')
             axs[0,1].set_title('Predicted Depth (mm)')
             plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=10), ax=axs[0, 2],fraction=0.046, pad=0.04)
@@ -452,7 +450,7 @@ class Helper(Operations):
             axs[1,2].set_title('|Error (ug/mL)|')
             plt.tight_layout()
                             
-            if self.save in ['Y', 'y'] and i == 2:
+            if self.save in ['Y', 'y'] and (i == 2 or i == 25):
                 # Define base name
                 print("inside")
                 base_filename = plot_save_path + f'_sample_{i}_'
