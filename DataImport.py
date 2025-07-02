@@ -116,7 +116,7 @@ class Operations():
         self.DF = np.array(self.DF)
         self.mask = self.DF == 0
         self.DF[self.mask] = self.background_val
-        
+
     def importData(self,isTesting=True,quickTest=False):
 
         #determine where to import testing/training data from 
@@ -185,7 +185,7 @@ class Operations():
             self.OP = np.expand_dims(self.dataset['OP'], axis=0)
             self.QF = np.expand_dims(self.dataset['QF'], axis=0)
             self.RE = np.expand_dims(self.dataset['RE'], axis=0)
-            self.FL = np.expand_dims(self.dataset['RE'], axis=0)
+            self.FL = np.expand_dims(self.dataset['FL'], axis=0)
 
         
 
@@ -198,6 +198,8 @@ class Operations():
         
         self.convert_background_val() #convert values of DF background
 
+        #convert mask shape
+        print("self.DF shape", self.DF.shape)
 
         #pad with ones temporarily 
         pad = 0
