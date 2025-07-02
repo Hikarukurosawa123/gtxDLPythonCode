@@ -175,13 +175,13 @@ class UnetModel():
 
         
         outSeg = Conv2D(filters=1, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], padding='same', 
-                data_format="channels_last")(outSeg)
+                data_format="channels_last", activation='sigmoid')(outSeg)
         
 
         ## Defining and compiling the model ##
         self.modelD = Model(inputs=[inOP_beg,inFL_beg], outputs=[outQF, outDF, outSeg])#,outFL])
-        self.modelD.compile(loss=['mae', 'mae', 'mae'],
+        self.modelD.compile(loss=['mae', 'mae', 'binary_crossentropy'],
                 optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
-                metrics=['mae', 'mae', 'mae'])
+                metrics=['mae', 'mae', 'accuracy'])
         self.modelD.summary()
         return self.modelD 
