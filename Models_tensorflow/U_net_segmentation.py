@@ -180,8 +180,8 @@ class UnetModel():
 
         ## Defining and compiling the model ##
         self.modelD = Model(inputs=[inOP_beg,inFL_beg], outputs=[outQF, outDF, outSeg])#,outFL])
-        self.modelD.compile(loss=['mae', 'mae'],
+        self.modelD.compile(loss=['mae', 'mae', 'mae'],
                 optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
-                metrics=['mae', 'mae'])
+                metrics=['mae', 'mae', 'mae'])
         self.modelD.summary()
         return self.modelD 
