@@ -26,7 +26,7 @@ class UnetModel():
         ## Input Multi-Dimensional Fluorescence ##
         inFL_beg = Input(shape=(self.params['xX'],self.params['yY'],self.params['nF'], 1))
 
-        thickness_beg = Input(shape=(1))
+        thickness_beg = Input(shape=(1, ))
 
 
         ## NOTE: Batch normalization can cause instability in the validation loss
