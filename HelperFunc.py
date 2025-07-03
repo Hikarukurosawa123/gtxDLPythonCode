@@ -301,8 +301,10 @@ class Helper(Operations):
 
         print(self.OP.shape, self.FL.shape)
 
-
-        predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
+        if self.thickness is not None:
+            predict = self.modelD.predict([self.OP, self.FL, self.thickness], batch_size = 32)  
+        else:
+            predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
 
 
         
