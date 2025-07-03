@@ -178,6 +178,10 @@ class Operations():
         self.QF = self.dataset['QF']
         self.RE = self.dataset['RE']
 
+        if 'th' in self.dataset:
+            self.thickness = self.dataset['th']
+        
+
 
         #expand the first axis if the dimension is of size 2
         if  len(np.shape(self.FL)) == 3:
@@ -518,7 +522,7 @@ class Operations():
         else:
             print("DF shape: ", self.DF.shape)
             print("mask shape: ", self.mask.shape)
-            self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
+            self.history = self.modelD.fit([self.OP, self.FL, self.thickness], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):

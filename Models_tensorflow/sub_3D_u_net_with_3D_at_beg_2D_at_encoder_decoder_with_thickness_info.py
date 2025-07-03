@@ -176,7 +176,7 @@ class UnetModel():
                 data_format="channels_last")(outDF)
 
         ## Defining and compiling the model ##
-        self.modelD = Model(inputs=[inOP_beg,inFL_beg], outputs=[outQF, outDF])#,outFL])
+        self.modelD = Model(inputs=[inOP_beg,inFL_beg, thickness_beg], outputs=[outQF, outDF])#,outFL])
         self.modelD.compile(loss=['mae', 'mae'],
                 optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
                 metrics=['mae', 'mae'])
