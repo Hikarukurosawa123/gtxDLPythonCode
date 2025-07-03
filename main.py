@@ -15,7 +15,7 @@ class DL(Utils, Helper, ModelInit, Operations):
         self.params = self.Defaults(self.case) # Define some default parameters based on the selected case
         self.isTesting = False
         self.AWS = False       
-        self.model_name = 'U_net_segmentation' #'original_siamese_3DCNN' #
+        self.model_name = 'sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder' #'original_siamese_3DCNN' #
 
 if __name__ == "__main__":
 
