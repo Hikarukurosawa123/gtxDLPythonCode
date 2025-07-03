@@ -426,14 +426,14 @@ class Helper(Operations):
             print("index_num: ", i)
             fig, axs = plt.subplots(2,3)
             plt.set_cmap('jet')
-            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=10), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 3, 10, 15])
+            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
             
 
             axs[0,0].axis('off')
             axs[0,0].set_title('True Depth (mm)')
         
             
-            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=10), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0, 3, 10, 15])
+            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0,5 , 10, 15])
             axs[0,1].axis('off')
             axs[0,1].set_title('Predicted Depth (mm)')
             plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=10), ax=axs[0, 2],fraction=0.046, pad=0.04)
