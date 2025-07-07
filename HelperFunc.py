@@ -88,13 +88,13 @@ class Helper(Operations):
 
         return DF_min_per_case
     
-    def get_max(self, QF):
+    def get_max(self, val):
 
-        QF_zeros = np.array(QF)
+        val = np.array(val)
 
-        QF_min_per_case = np.max(QF_zeros, axis = (1,2))
+        val_min_per_case = np.max(val, axis = (1,2))
 
-        return QF_min_per_case
+        return val_min_per_case
 
 
     def import_data_for_testing(self):
@@ -290,6 +290,7 @@ class Helper(Operations):
     def Analysis(self, save_image = 0):
         
         use_same_data = 0
+        iceberg = 0
         if not use_same_data:
             self.import_data_for_testing()
 
@@ -340,12 +341,15 @@ class Helper(Operations):
 
         # Max and Min values per sample
 
-        DF_min = self.get_min(self.DF)
-        DFP_min = self.get_min(DF_P)
+        if iceberg:
+            DF_min = self.get_max(self.DF)
+            DFP_min = self.get_max(DF_P)
+        else:
+            DF_min = self.get_min(self.DF)
+            DFP_min = self.get_min(DF_P)
             
         DF_min = np.array(DF_min)
         DFP_min = np.array(DFP_min)
-        print(DFP_min)
         plot_save_path =  os.path.join('./predictions/' + self.folder_name)
 
         if save_image:
