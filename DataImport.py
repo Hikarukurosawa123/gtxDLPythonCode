@@ -520,8 +520,7 @@ class Operations():
             self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=50, verbose=1, shuffle=True, callbacks=callbackList)     
         else:
-            print("DF shape: ", self.DF.shape)
-            print("mask shape: ", self.mask.shape)
+        
             self.history = self.modelD.fit([self.RE, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         

@@ -174,4 +174,4 @@ class UnetModel():
                 optimizer=getattr(keras.optimizers,self.params['optimizer'])(learning_rate=self.params['learningRate']),
                 metrics=['mae', 'mae'])
         self.modelD.summary()
-        return None
+        return self.modelD
