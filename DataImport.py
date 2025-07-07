@@ -14,12 +14,12 @@ import os
 import mat73
 from datetime import datetime
 from pathlib import Path
+import tensorflow as tf
 
 class Operations():
     
     def __init__(self):
         pass
-      
 
         
     def get_min(self, DF):
