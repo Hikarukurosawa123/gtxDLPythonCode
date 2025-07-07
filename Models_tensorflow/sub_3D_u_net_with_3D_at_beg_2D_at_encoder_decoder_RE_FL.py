@@ -61,6 +61,8 @@ class UnetModel():
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
+        inRE = Reshape((inRE.shape[1], inRE.shape[2], inRE.shape[3] * inRE.shape[4]))(inRE)
+
         concat = concatenate([inRE,inFL],axis=-1)
 
         Max_Pool_1 = MaxPool2D()(concat)
