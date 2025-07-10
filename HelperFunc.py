@@ -300,18 +300,14 @@ class Helper(Operations):
         self.OP = np.array(self.OP)
         self.FL = np.array(self.FL) #scale by 2
 
-        print(self.OP.shape, self.FL.shape)
-
-        if self.thickness is not None:
-            predict = self.modelD.predict([self.OP, self.FL, self.thickness], batch_size = 32)  
-        else:
-            predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
-
-
-        
+        # if self.thickness is not None:
+        #     predict = self.modelD.predict([self.OP, self.FL, self.thickness], batch_size = 32)  
+        # else:
+        #     predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
+        predict = self.modelD.predict([self.OP, self.FL], batch_size = 32)  
         QF_P = predict[0]
         DF_P = predict[1]
-        mask_P = predict[2] if len(predict) > 2 else None  # Check if mask is returned
+        #mask_P = predict[2] if len(predict) > 2 else None  # Check if mask is returned
         QF_P /= self.params['scaleQF']
         DF_P /= self.params['scaleDF']  
 
@@ -319,7 +315,7 @@ class Helper(Operations):
     
         DF_P = np.reshape(DF_P, (DF_P.shape[0], DF_P.shape[1], DF_P.shape[2]))
         QF_P = np.reshape(QF_P, (QF_P.shape[0], QF_P.shape[1], QF_P.shape[2]))
-        mask_P = np.reshape(mask_P, (mask_P.shape[0], mask_P.shape[1], mask_P.shape[2])) if mask_P is not None else None
+        #mask_P = np.reshape(mask_P, (mask_P.shape[0], mask_P.shape[1], mask_P.shape[2])) if mask_P is not None else None
         ## Error Stats
         # Average error
         
@@ -457,23 +453,23 @@ class Helper(Operations):
             plt.tight_layout()
 
             # --- Plotting Mask if available ---
-            if mask_P is not None:
-                fig_mask, axs_mask = plt.subplots(1, 3)
-                plt.set_cmap('gray')
+            # if mask_P is not None:
+            #     fig_mask, axs_mask = plt.subplots(1, 3)
+            #     plt.set_cmap('gray')
 
-                axs_mask[0].imshow(self.mask[i,:,:])
-                axs_mask[0].axis('off')
-                axs_mask[0].set_title('True Mask')
+            #     axs_mask[0].imshow(self.mask[i,:,:])
+            #     axs_mask[0].axis('off')
+            #     axs_mask[0].set_title('True Mask')
 
-                axs_mask[1].imshow(mask_P[i,:,:])
-                axs_mask[1].axis('off')
-                axs_mask[1].set_title('Predicted Mask')
+            #     axs_mask[1].imshow(mask_P[i,:,:])
+            #     axs_mask[1].axis('off')
+            #     axs_mask[1].set_title('Predicted Mask')
 
-                axs_mask[2].imshow(abs(self.mask[i,:,:] - mask_P[i,:,:]))
-                axs_mask[2].axis('off')
-                axs_mask[2].set_title('|Error|')
+            #     axs_mask[2].imshow(abs(self.mask[i,:,:] - mask_P[i,:,:]))
+            #     axs_mask[2].axis('off')
+            #     axs_mask[2].set_title('|Error|')
 
-                plt.tight_layout()
+            #     plt.tight_layout()
                             
             if self.save in ['Y', 'y'] and (i == 2 or i == 25):
                 # Define base name
