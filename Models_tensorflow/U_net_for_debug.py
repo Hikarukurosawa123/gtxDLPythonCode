@@ -174,7 +174,7 @@ class UnetModel():
                 
                 self.model.summary()
 
-                return None
+                return self.model
         
         def load_model(self, model_path):
             self.model = keras.models.load_model(model_path)
