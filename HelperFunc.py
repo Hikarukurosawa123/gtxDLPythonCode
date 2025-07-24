@@ -113,7 +113,7 @@ class Helper(Operations):
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 0
+        from_S3 = 1
         
         if from_S3:
             bucket = self.bucket
@@ -471,7 +471,7 @@ class Helper(Operations):
 
             #     plt.tight_layout()
                             
-            if self.save in ['Y', 'y'] and (i == 2 or i == 25):
+            if self.save in ['Y', 'y']:
                 # Define base name
                 print("inside")
                 base_filename = plot_save_path + f'_sample_{i}_'
