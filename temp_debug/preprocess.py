@@ -30,7 +30,6 @@ def load_split_data(file_path):
 
     data = mat73.loadmat(file_path)
 
-    print(data)
     data = {k: v for k, v in data.items() if not k.startswith('__')}
 
 
@@ -49,6 +48,9 @@ def load_data(file_path, scale_params):
     data_by_split = load_split_data(file_path)
 
     result = {}
+
+    for type in ['train', 'val', 'test']:
+        print(data_by_split['train'])
 
     for type in ['train', 'val', 'test']:
         fluorescence = data_by_split[type]['F']
