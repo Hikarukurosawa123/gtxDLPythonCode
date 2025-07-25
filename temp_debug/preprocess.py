@@ -1,5 +1,8 @@
 import scipy.io as sio
 import numpy as np
+import mat73
+import io
+
 
 def scale_data(data_dict, params):
     scaled_data_dict = {}
@@ -23,8 +26,9 @@ def normalization(fluorescence, optical_props):
     return f, mu_a_norm, mu_s_norm
 
 def load_split_data(file_path):
-    data = sio.loadmat(file_path)
-    
+    #data = sio.loadmat(file_path)
+
+    data =  mat73.loadmat((io.BytesIO(file_path)))
     data = {k: v for k, v in data.items() if not k.startswith('__')}
 
     splits = ['train', 'val', 'test']

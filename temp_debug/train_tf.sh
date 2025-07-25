@@ -57,6 +57,5 @@ python train_tf.py \
     --kernelConv2D $KERNEL_2D \
     --strideConv2D $STRIDE_2D \
     --data_path $DATA_PATH
-    --sagemaker False \
 
 echo "Training complete."
