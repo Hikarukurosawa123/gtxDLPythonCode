@@ -1,0 +1,15 @@
+boto3
+botocore
+dicttoxml
+h5py
+keras
+mat73
+matplotlib
+numpy
+openpyxl
+pandas
+scikit_learn
+scipy
+ipykernel
+scikit-image
+opencv-python
