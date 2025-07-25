@@ -48,11 +48,11 @@ def load_data(file_path, scale_params):
     result = {}
 
     for type in ['train', 'val', 'test']:
-        fluorescence = data_by_split[type]['fluorescence']
-        optical_props = data_by_split[type]['optical_props']
-        depth = data_by_split[type]['depth']
-        concentration_fluor = data_by_split[type]['concentration_fluor']
-        reflectance = data_by_split[type]['reflectance']
+        fluorescence = data_by_split[type]['F']
+        optical_props = data_by_split[type]['OP']
+        depth = data_by_split[type]['DF']
+        concentration_fluor = data_by_split[type]['QF']
+        reflectance = data_by_split[type]['RE']
 
         # f, mu_a_norm, mu_s_norm = normalization(fluorescence, optical_props)
         # data_dict = {
