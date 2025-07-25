@@ -166,7 +166,7 @@ class Operations():
 
         dataTemp = obj['Body'].read()
     
-        self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
+        self.dataset = mat73.loadmat(dataTemp)
   
         apply_normalization =0
         apply_min_max_normalization = 0
