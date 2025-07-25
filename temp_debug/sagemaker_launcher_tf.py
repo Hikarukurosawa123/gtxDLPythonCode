@@ -38,7 +38,7 @@ estimator = TensorFlow(
         "strideConv2D": "1 1",
         "data_path": "s3://20240909-hikaru/TrainingData/20241118_10000_training_withTBR_original/nImages10000_new.mat"
     },
-    output_path='s3://20250509-victor/tf_model_output/'
+    output_path='s3://20240909-hikaru/tf_model_output/'
 )
 job_name = f'tf-model-output-{datetime.now().strftime("%Y%m%d-%H%M%S")}'
 inputs = {
