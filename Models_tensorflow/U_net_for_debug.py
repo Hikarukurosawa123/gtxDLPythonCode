@@ -27,8 +27,13 @@ class UnetModel():
                 # Input Optical Properties
                 inOP_beg = Input(shape=(self.params['xX'],self.params['yY'],2))
                 ## Input Multi-Dimensional Fluorescence
-                #inFL_beg = Input(shape=(self.params['nF'], self.params['xX'], self.params['yY'], 1))
-                inFL_beg = Input(shape=(self.params['xX'], self.params['yY'], self.params['nF'], 1))
+                inFL_beg = Input(shape=(self.params['nF'], self.params['xX'], self.params['yY'], 1))
+                #inFL_beg = Input(shape=(self.params['xX'], self.params['yY'], self.params['nF'], 1))
+
+                inFL_beg = Permute((2, 3, 1, 4))(inFL_beg)
+
+                print(inFL_beg.shape)
+
 
                 #3D CNN for all layers
 

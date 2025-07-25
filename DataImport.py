@@ -172,6 +172,10 @@ class Operations():
         apply_min_max_normalization = 0
 
         self.FL = self.dataset['F']
+
+        #only self.FL, temporarily, set shape as (num_samples, nF, xx, yy)
+
+        self.FL = np.transpose(self.FL, (0, 3, 1, 2))
        
         self.DF = self.dataset['DF']
         self.OP = self.dataset['OP']
