@@ -14,7 +14,7 @@ estimator = TensorFlow(
     script_mode=True,
     dependencies=['requirements.txt'],
     hyperparameters= {
-        "sagemaker": True,
+        "sagemaker": False,
         "activation": "relu",
         "optimizer": "Adam",
         "epochs": 100,
