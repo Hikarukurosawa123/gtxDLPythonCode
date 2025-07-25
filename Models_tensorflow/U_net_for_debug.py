@@ -30,9 +30,7 @@ class UnetModel():
                 inFL_beg = Input(shape=(6, self.params['xX'], self.params['yY'], 1))
                 #inFL_beg = Input(shape=(self.params['xX'], self.params['yY'], self.params['nF'], 1))
 
-                inFL_beg_permute = Permute((2, 3, 1, 4))(inFL_beg)
 
-                print(inFL_beg_permute.shape)
 
 
                 #3D CNN for all layers
@@ -51,9 +49,9 @@ class UnetModel():
                 # inOP = Dropout(0.75)(inOP)  
 
                 ## Fluorescence Input Branch ##
-                input_shape = inFL_beg_permute.shape
+                input_shape = inFL_beg.shape
                 inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
-                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg_permute)
+                        padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
                 # inFL = Dropout(0.75)(inFL)
 
                 inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
@@ -64,7 +62,7 @@ class UnetModel():
                 # inFL = Dropout(0.75)(inFL)
 
                 ## Concatenate Branch ##
-                #inFL = Permute((2, 3, 1, 4))(inFL)
+                inFL = Permute((2, 3, 1, 4))(inFL)
                 inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
                 concat = concatenate([inOP,inFL],axis=-1)
 
