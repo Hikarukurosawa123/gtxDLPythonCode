@@ -28,7 +28,7 @@ def normalization(fluorescence, optical_props):
 def load_split_data(file_path):
     #data = sio.loadmat(file_path)
 
-    data =  mat73.loadmat((io.BytesIO(file_path)))
+    data = mat73.loadmat(file_path)
     data = {k: v for k, v in data.items() if not k.startswith('__')}
 
     splits = ['train', 'val', 'test']
