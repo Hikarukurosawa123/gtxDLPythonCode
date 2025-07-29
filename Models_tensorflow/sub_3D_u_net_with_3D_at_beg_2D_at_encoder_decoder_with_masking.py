@@ -38,46 +38,51 @@ class UnetModel():
                 input_shape = tf.shape(tensor)
                 batch_size, h, w, d, c = input_shape[0], input_shape[1], input_shape[2], input_shape[3], input_shape[4]
 
-                # Compute number of 2D blocks in height and width
-                num_blocks_h = h // block_size
-                num_blocks_w = w // block_size
+                # Compute number of blocks to cover full height and width
+                num_blocks_h = tf.cast(tf.math.ceil(tf.cast(h, tf.float32) / block_size), tf.int32)
+                num_blocks_w = tf.cast(tf.math.ceil(tf.cast(w, tf.float32) / block_size), tf.int32)
                 total_blocks = num_blocks_h * num_blocks_w
 
                 # Number of blocks to keep
                 num_keep_blocks = tf.cast(
-                        tf.round((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32)),
-                        tf.int32
+                tf.round((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32)),
+                tf.int32
                 )
 
-                # Function to generate a single (H, W, D) mask per channel
                 def single_channel_mask(_):
                         keep_indices = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
                         flat_mask = tf.scatter_nd(
-                        indices=tf.expand_dims(keep_indices, 1),
-                        updates=tf.ones([num_keep_blocks], dtype=tf.float32),
-                        shape=[total_blocks]
+                                indices=tf.expand_dims(keep_indices, 1),
+                                updates=tf.ones([num_keep_blocks], dtype=tf.float32),
+                                shape=[total_blocks]
                         )
                         mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
-                        mask_2d = tf.repeat(mask_2d, block_size, axis=0)
-                        mask_2d = tf.repeat(mask_2d, block_size, axis=1)
+
+                        # Repeat each block to full size
+                        mask_2d = tf.repeat(mask_2d, repeats=block_size, axis=0)
+                        mask_2d = tf.repeat(mask_2d, repeats=block_size, axis=1)
+
+                        # Crop excess if needed (to match original shape)
                         mask_2d = mask_2d[:h, :w]
+
+                        # Expand over depth and return
                         mask_3d = tf.expand_dims(mask_2d, axis=-1)  # (H, W, 1)
                         mask_3d = tf.tile(mask_3d, [1, 1, d])       # (H, W, D)
                         return mask_3d
 
-                # Use tf.map_fn instead of list comprehension
+                # Generate mask per channel
                 channel_masks = tf.map_fn(
-                        single_channel_mask,
-                        elems=tf.range(c),
-                        fn_output_signature=tf.float32
+                single_channel_mask,
+                elems=tf.range(c),
+                fn_output_signature=tf.float32
                 )  # (C, H, W, D)
 
+                # Rearrange and tile over batch
                 channel_masks = tf.transpose(channel_masks, [1, 2, 3, 0])  # (H, W, D, C)
                 channel_masks = tf.expand_dims(channel_masks, axis=0)      # (1, H, W, D, C)
                 mask = tf.tile(channel_masks, [batch_size, 1, 1, 1, 1])     # (B, H, W, D, C)
 
                 return tensor * tf.cast(mask, tensor.dtype)
-
 
         return tf.keras.layers.Lambda(mask_fn, output_shape=lambda s: s)(x)
     def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.6):
@@ -99,13 +104,18 @@ class UnetModel():
                 w = tf.shape(tensor)[1]
                 c = tf.shape(tensor)[2]
 
-                # Number of blocks along height and width
+                # Number of blocks along height and width, covering entire image without padding
                 num_blocks_h = tf.math.floordiv(h + block_size - 1, block_size)
                 num_blocks_w = tf.math.floordiv(w + block_size - 1, block_size)
                 total_blocks = num_blocks_h * num_blocks_w
-                num_keep_blocks = tf.cast((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32), tf.int32)
+
+                num_keep_blocks = tf.cast(
+                (1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32),
+                tf.int32
+                )
 
                 def mask_one_channel(_):
+                        # Randomly pick blocks to keep
                         keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
                         flat_mask = tf.scatter_nd(
                                 indices=tf.expand_dims(keep_idx, 1),
@@ -113,21 +123,22 @@ class UnetModel():
                                 shape=[total_blocks]
                         )
                         mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
-                        # Upsample each block to block_size
+                        # Repeat each block to full size
                         mask_grid = tf.repeat(mask_grid, block_size, axis=0)
                         mask_grid = tf.repeat(mask_grid, block_size, axis=1)
-                        # Crop to original HxW
+                        # Crop to original size (h, w)
                         return mask_grid[:h, :w]
 
-                # Apply mask generation for each channel independently
+                # Create masks for each channel independently
                 masks = tf.map_fn(mask_one_channel, tf.range(c), dtype=tf.float32)
                 mask_stack = tf.transpose(masks, perm=[1, 2, 0])  # (H, W, C)
                 return tensor * tf.cast(mask_stack, tensor.dtype)
 
-        return Lambda(
-                lambda x: tf.map_fn(mask_fn, x),
-                output_shape=lambda s: s
+        return tf.keras.layers.Lambda(
+                lambda batch_x: tf.map_fn(mask_fn, batch_x),
+                output_shape=lambda input_shape: input_shape
         )(x)
+
 
 
 
