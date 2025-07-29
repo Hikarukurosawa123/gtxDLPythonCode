@@ -85,7 +85,7 @@ class UnetModel():
                 return tensor * tf.cast(mask, tensor.dtype)
 
         return tf.keras.layers.Lambda(mask_fn, output_shape=lambda s: s)(x)
-    def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.6):
+    def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.5):
         """
         Applies random block-wise masking per channel on a 3D tensor (H, W, C),
         where the same block mask spans height/width but is different per channel.
