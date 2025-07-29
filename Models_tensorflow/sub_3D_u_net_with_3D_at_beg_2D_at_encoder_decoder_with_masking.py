@@ -34,15 +34,21 @@ class UnetModel():
         
         return Lambda(apply_mask)(x)
         
-    def block_masking(self, x, block_size=17, num_keep_blocks=6):
+    def block_masking(self, x, block_size=17, masking_ratio=0.5):
         def mask_fn(tensor):
                 input_shape = tf.shape(tensor)
                 batch_size, h, w, c = input_shape[0], input_shape[1], input_shape[2], input_shape[3]
 
-                # Compute number of blocks
+                # Compute number of full blocks
                 num_blocks_h = h // block_size
                 num_blocks_w = w // block_size
                 total_blocks = num_blocks_h * num_blocks_w
+
+                # Compute number of blocks to keep
+                num_keep_blocks = tf.cast(
+                tf.round((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32)),
+                tf.int32
+                )
 
                 # Create a flat binary mask: 1 for kept blocks, 0 for masked
                 keep_indices = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
@@ -52,22 +58,21 @@ class UnetModel():
                 shape=[total_blocks]
                 )
 
-                # Reshape to 2D block grid and expand to full size
-                mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])  # (H_blocks, W_blocks)
-                mask_grid = tf.repeat(mask_grid, block_size, axis=0)             # Repeat rows
-                mask_grid = tf.repeat(mask_grid, block_size, axis=1)             # Repeat cols
+                # Reshape and expand mask to full spatial size
+                mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                mask_grid = tf.repeat(mask_grid, block_size, axis=0)
+                mask_grid = tf.repeat(mask_grid, block_size, axis=1)
+                mask_grid = mask_grid[:h, :w]  # Crop in case dimensions aren't exact multiples
 
-                # In case image size not divisible by block_size, crop mask
-                mask_grid = mask_grid[:h, :w]
-
-                # Expand mask to (batch_size, height, width, channels)
-                mask = tf.expand_dims(mask_grid, axis=0)              # (1, H, W)
-                mask = tf.expand_dims(mask, axis=-1)                  # (1, H, W, 1)
-                mask = tf.tile(mask, [batch_size, 1, 1, c])           # (B, H, W, C)
+                # Expand to (batch_size, height, width, channels)
+                mask = tf.expand_dims(mask_grid, axis=0)    # (1, H, W)
+                mask = tf.expand_dims(mask, axis=-1)        # (1, H, W, 1)
+                mask = tf.tile(mask, [batch_size, 1, 1, c])  # (B, H, W, C)
 
                 return tensor * tf.cast(mask, tensor.dtype)
 
         return Lambda(mask_fn)(x)
+
     
 
     def block_masking_per_channel(self, x, block_size=17, num_keep_blocks=6):
@@ -131,17 +136,20 @@ class UnetModel():
         inOP = Conv2D(filters=self.params['nFilters2D']//2, kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
         #inOP = Dropout(0.5)(inOP)
-        inOP = self.random_masking(inOP, 0.5)
+        #inOP = self.random_masking(inOP, 0.5)
+        inOP = self.block_masking(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)
-        inOP = self.random_masking(inOP, 0.5)
+        #inOP = self.random_masking(inOP, 0.5)
+        inOP = self.block_masking(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)  
-        inOP = self.random_masking(inOP, 0.5)
+        #inOP = self.random_masking(inOP, 0.5)
+        inOP = self.block_masking(inOP)
 
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
@@ -150,17 +158,20 @@ class UnetModel():
         inFL = Conv3D(filters=self.params['nFilters3D']//2, kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], input_shape=input_shape[1:], data_format="channels_last")(inFL_beg)
         #inFL = Dropout(0.5)(inFL)
-        inFL = self.random_masking(inFL, 0.5)
+        #inFL = self.random_masking(inFL, 0.5)
+        inFL = self.block_masking(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
-        inFL = self.random_masking(inFL, 0.5)
+        #inFL = self.random_masking(inFL, 0.5)
+        inFL = self.block_masking(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
-        inFL = self.random_masking(inFL, 0.5)
+        #inFL = self.random_masking(inFL, 0.5)
+        inFL = self.block_masking(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
