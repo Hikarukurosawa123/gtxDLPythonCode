@@ -80,52 +80,55 @@ class UnetModel():
 
 
         return tf.keras.layers.Lambda(mask_fn, output_shape=lambda s: s)(x)
+    def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.6):
+        """
+        Applies random block-wise masking per channel on a 3D tensor (H, W, C),
+        where the same block mask spans height/width but is different per channel.
 
+        Args:
+                x: Tensor of shape (B, H, W, C)
+                block_size: Size of the square blocks (e.g., 17)
+                masking_ratio: Fraction of blocks to mask out (e.g., 0.6 means keep 40%)
 
-    
+        Returns:
+                Tensor of the same shape as input with masked values.
+        """
 
-    def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.5):
         def mask_fn(tensor):
-                input_shape = tf.shape(tensor)
-                batch_size, h, w, c = input_shape[0], input_shape[1], input_shape[2], input_shape[3]
+                h = tf.shape(tensor)[0]
+                w = tf.shape(tensor)[1]
+                c = tf.shape(tensor)[2]
 
                 # Number of blocks along height and width
-                num_blocks_h = h // block_size
-                num_blocks_w = w // block_size
+                num_blocks_h = tf.math.floordiv(h + block_size - 1, block_size)
+                num_blocks_w = tf.math.floordiv(w + block_size - 1, block_size)
                 total_blocks = num_blocks_h * num_blocks_w
+                num_keep_blocks = tf.cast((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32), tf.int32)
 
-                # Number of blocks to keep
-                num_keep_blocks = tf.cast(
-                tf.round((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32)),
-                tf.int32
-                )
-
-                # Generate per-sample mask
-                def generate_mask_per_sample(_):
-                        masks = []
-
-                        for _ in tf.range(c):  # Use tf.range for graph compatibility
-                                keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
-                                flat_mask = tf.scatter_nd(
+                def mask_one_channel(_):
+                        keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
+                        flat_mask = tf.scatter_nd(
                                 indices=tf.expand_dims(keep_idx, 1),
                                 updates=tf.ones([num_keep_blocks], dtype=tf.float32),
                                 shape=[total_blocks]
-                                )
+                        )
+                        mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                        # Upsample each block to block_size
+                        mask_grid = tf.repeat(mask_grid, block_size, axis=0)
+                        mask_grid = tf.repeat(mask_grid, block_size, axis=1)
+                        # Crop to original HxW
+                        return mask_grid[:h, :w]
 
-                                mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
-                                mask_grid = tf.repeat(mask_grid, block_size, axis=0)
-                                mask_grid = tf.repeat(mask_grid, block_size, axis=1)
-                                mask_grid = mask_grid[:h, :w]
-                                masks.append(mask_grid)
+                # Apply mask generation for each channel independently
+                masks = tf.map_fn(mask_one_channel, tf.range(c), dtype=tf.float32)
+                mask_stack = tf.transpose(masks, perm=[1, 2, 0])  # (H, W, C)
+                return tensor * tf.cast(mask_stack, tensor.dtype)
 
-                        sample_mask = tf.stack(masks, axis=-1)  # (H, W, C)
-                        return sample_mask
+        return Lambda(
+                lambda x: tf.map_fn(mask_fn, x),
+                output_shape=lambda s: s
+        )(x)
 
-                full_mask = tf.map_fn(generate_mask_per_sample, tf.range(batch_size), dtype=tf.float32)
-
-                return tensor * tf.cast(full_mask, tensor.dtype)
-
-        return Lambda(mask_fn, output_shape=lambda s: s)(x)
 
 
 
