@@ -153,7 +153,7 @@ def train(params):
     val_fluorescence = val_data['fluorescence']
     # val_fluorescence = np.transpose(val_fluorescence, (0, 3, 1, 2))
     val_fluorescence = np.expand_dims(val_fluorescence, axis=-1)
-    val_op = np.stack([val_data['mu_a'], val_data['mu_s']], axis=1).transpose(0, 2, 3, 1)
+    val_op = np.stack([val_data['mu_a'], val_data['mu_s']], axis=1)#.transpose(0, 2, 3, 1)
     val_depth = val_data['depth']
     val_concentration_fluor = val_data['concentration_fluor']
     val_reflectance = val_data['reflectance']
@@ -172,7 +172,7 @@ def train(params):
     test_fluorescence = test_data['fluorescence']
     # test_fluorescence = np.transpose(test_fluorescence, (0, 3, 1, 2))
     test_fluorescence = np.expand_dims(test_fluorescence, axis=-1)
-    test_op = np.stack([test_data['mu_a'], test_data['mu_s']], axis=1).transpose(0, 2, 3, 1)
+    test_op = np.stack([test_data['mu_a'], test_data['mu_s']], axis=1)#.transpose(0, 2, 3, 1)
     test_depth = test_data['depth']
     test_concentration_fluor = test_data['concentration_fluor']
     test_reflectance = test_data['reflectance']

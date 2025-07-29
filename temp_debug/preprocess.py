@@ -30,6 +30,10 @@ def load_split_data(file_path):
 
     data = mat73.loadmat(file_path)
 
+    for k in data.items():
+        if not k.startswith('__'):
+            print(k)
+
     data = {k: v for k, v in data.items() if not k.startswith('__')}
 
 

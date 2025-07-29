@@ -113,7 +113,7 @@ class Helper(Operations):
         time.sleep(1.5)
 
         #choose to import data from bucket or the local file path "ModelParameters"
-        from_S3 = 1
+        from_S3 = 0
         
         if from_S3:
             bucket = self.bucket
