@@ -84,7 +84,7 @@ class UnetModel():
 
     
 
-    def block_masking_per_channel(self, x, block_size=17, num_keep_blocks=6):
+    def block_masking_per_channel(self, x, block_size=17, masking_ratio=0.5):
         def mask_fn(tensor):
                 input_shape = tf.shape(tensor)
                 batch_size, h, w, c = input_shape[0], input_shape[1], input_shape[2], input_shape[3]
@@ -94,40 +94,40 @@ class UnetModel():
                 num_blocks_w = w // block_size
                 total_blocks = num_blocks_h * num_blocks_w
 
-                # Prepare a full mask of shape (batch, h, w, c)
+                # Number of blocks to keep
+                num_keep_blocks = tf.cast(
+                tf.round((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32)),
+                tf.int32
+                )
+
+                # Generate per-sample mask
                 def generate_mask_per_sample(_):
-                        # Per channel masking
                         masks = []
-                        for _ in range(c):
-                                # Randomly pick keep blocks
+
+                        for _ in tf.range(c):  # Use tf.range for graph compatibility
                                 keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
                                 flat_mask = tf.scatter_nd(
                                 indices=tf.expand_dims(keep_idx, 1),
                                 updates=tf.ones([num_keep_blocks], dtype=tf.float32),
                                 shape=[total_blocks]
                                 )
-                                # Reshape to 2D block grid
+
                                 mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
-                                # Expand blocks
                                 mask_grid = tf.repeat(mask_grid, block_size, axis=0)
                                 mask_grid = tf.repeat(mask_grid, block_size, axis=1)
-                                # Trim to original size
                                 mask_grid = mask_grid[:h, :w]
                                 masks.append(mask_grid)
 
-                        # Stack masks for all channels: (H, W, C)
-                        sample_mask = tf.stack(masks, axis=-1)
+                        sample_mask = tf.stack(masks, axis=-1)  # (H, W, C)
                         return sample_mask
 
-                # Apply per-sample masking for the whole batch
                 full_mask = tf.map_fn(generate_mask_per_sample, tf.range(batch_size), dtype=tf.float32)
 
-                # Multiply input by the mask
                 return tensor * tf.cast(full_mask, tensor.dtype)
 
         return Lambda(mask_fn)(x)
 
-        
+
 
     def build_model(self):        
         """The deep learning architecture gets defined here"""
