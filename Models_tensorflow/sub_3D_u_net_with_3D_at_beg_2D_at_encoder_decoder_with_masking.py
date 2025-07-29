@@ -71,7 +71,7 @@ class UnetModel():
 
                 return tensor * tf.cast(mask, tensor.dtype)
 
-        return Lambda(mask_fn)(x)
+        return Lambda(mask_fn, output_shape=lambda s: s)(x)
 
     
 
