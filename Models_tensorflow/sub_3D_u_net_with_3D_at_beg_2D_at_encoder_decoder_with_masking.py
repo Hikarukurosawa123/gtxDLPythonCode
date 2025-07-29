@@ -138,6 +138,56 @@ class UnetModel():
                 lambda batch_x: tf.map_fn(mask_fn, batch_x),
                 output_shape=lambda input_shape: input_shape
         )(x)
+    def block_masking_per_depth_channel(self, x, block_size=17, masking_ratio=0.5):
+        """
+        Applies independent 2D block-wise masking to each (H, W) slice of every depth-channel combination
+        in a 5D tensor (B, H, W, D, C).
+
+        Args:
+                x: Tensor of shape (B, H, W, D, C)
+                block_size: Size of square masking block in (H, W)
+                masking_ratio: Fraction of blocks to mask per (H, W) slice
+
+        Returns:
+                Tensor of same shape with values zeroed out based on block masks.
+        """
+
+        def sample_fn(sample):  # (H, W, D, C)
+                h = tf.shape(sample)[0]
+                w = tf.shape(sample)[1]
+                d = tf.shape(sample)[2]
+                c = tf.shape(sample)[3]
+
+                num_blocks_h = h // block_size
+                num_blocks_w = w // block_size
+                total_blocks = num_blocks_h * num_blocks_w
+
+                num_keep = tf.cast((1.0 - masking_ratio) * tf.cast(total_blocks, tf.float32), tf.int32)
+
+                def mask_one_depth_channel(_):
+                        keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep]
+                        flat_mask = tf.scatter_nd(
+                                indices=tf.expand_dims(keep_idx, 1),
+                                updates=tf.ones([num_keep], dtype=tf.float32),
+                                shape=[total_blocks]
+                        )
+                        mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                        mask_2d = tf.repeat(mask_2d, block_size, axis=0)
+                        mask_2d = tf.repeat(mask_2d, block_size, axis=1)
+                        return mask_2d[:h, :w]  # crop to original size
+
+                # Apply a unique 2D mask for each (d, c) pair
+                masks = tf.map_fn(mask_one_depth_channel, tf.range(d * c), dtype=tf.float32)  # shape (D*C, H, W)
+                masks = tf.reshape(masks, [d, c, h, w])
+                masks = tf.transpose(masks, [2, 3, 0, 1])  # shape (H, W, D, C)
+
+                return sample * tf.expand_dims(tf.cast(masks, sample.dtype), axis=0)[0]  # remove batch dim hack
+
+        # Apply across batch
+        return tf.keras.layers.Lambda(
+                lambda x: tf.map_fn(sample_fn, x),
+                output_shape=lambda s: s
+        )(x)
 
 
 
@@ -183,21 +233,21 @@ class UnetModel():
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_channel(inFL)
+        inFL = self.block_masking_per_depth_channel(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_channel(inFL)
+        inFL = self.block_masking_per_depth_channel(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_channel(inFL)
+        inFL = self.block_masking_per_depth_channel(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
