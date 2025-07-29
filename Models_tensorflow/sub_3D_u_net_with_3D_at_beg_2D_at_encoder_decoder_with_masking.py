@@ -146,19 +146,19 @@ class UnetModel():
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking(inOP)
+        inOP = self.block_masking_per_channel(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking(inOP)
+        inOP = self.block_masking_per_channel(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)  
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking(inOP)
+        inOP = self.block_masking_per_channel(inOP)
 
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
