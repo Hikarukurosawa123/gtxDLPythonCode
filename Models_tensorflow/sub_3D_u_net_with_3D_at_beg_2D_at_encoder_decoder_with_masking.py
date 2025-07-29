@@ -33,7 +33,6 @@ class UnetModel():
                 return tensor * binary_mask
         
         return Lambda(apply_mask)(x)
-        
     def block_masking(self, x, block_size=17, masking_ratio=0.5):
         def mask_fn(tensor):
                 input_shape = tf.shape(tensor)
@@ -52,21 +51,21 @@ class UnetModel():
 
                 # Function to generate a 3D mask for one channel: (H, W, D)
                 def single_channel_mask():
-                keep_indices = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
-                flat_mask = tf.scatter_nd(
-                        indices=tf.expand_dims(keep_indices, 1),
-                        updates=tf.ones([num_keep_blocks], dtype=tf.float32),
-                        shape=[total_blocks]
-                )
-                mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
-                mask_2d = tf.repeat(mask_2d, block_size, axis=0)
-                mask_2d = tf.repeat(mask_2d, block_size, axis=1)
-                mask_2d = mask_2d[:h, :w]
-                mask_3d = tf.expand_dims(mask_2d, axis=-1)  # (H, W, 1)
-                mask_3d = tf.tile(mask_3d, [1, 1, d])       # (H, W, D)
-                return mask_3d  # per channel
+                        keep_indices = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
+                        flat_mask = tf.scatter_nd(
+                                indices=tf.expand_dims(keep_indices, 1),
+                                updates=tf.ones([num_keep_blocks], dtype=tf.float32),
+                                shape=[total_blocks]
+                        )
+                        mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                        mask_2d = tf.repeat(mask_2d, block_size, axis=0)
+                        mask_2d = tf.repeat(mask_2d, block_size, axis=1)
+                        mask_2d = mask_2d[:h, :w]
+                        mask_3d = tf.expand_dims(mask_2d, axis=-1)  # (H, W, 1)
+                        mask_3d = tf.tile(mask_3d, [1, 1, d])       # (H, W, D)
+                        return mask_3d
 
-                # Generate separate masks for each channel
+                # Generate per-channel mask and stack
                 channel_masks = tf.stack([single_channel_mask() for _ in range(c)], axis=-1)  # (H, W, D, C)
                 channel_masks = tf.expand_dims(channel_masks, axis=0)  # (1, H, W, D, C)
                 mask = tf.tile(channel_masks, [batch_size, 1, 1, 1, 1])  # (B, H, W, D, C)
