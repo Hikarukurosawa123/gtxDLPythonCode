@@ -4,6 +4,113 @@ from tensorflow import keras
 
 import tensorflow as tf 
 
+class RandomMaskingLayer(tf.keras.layers.Layer):
+    def __init__(self, rate):
+        super().__init__()
+        self.rate = rate
+
+    def call(self, inputs, training=False):
+        if training:
+            shape = tf.shape(inputs)
+            random_tensor = tf.random.uniform(shape, 0, 1)
+            binary_mask = tf.cast(random_tensor > self.rate, inputs.dtype)
+            return inputs * binary_mask
+        else:
+            return inputs
+class BlockMasking(tf.keras.layers.Layer):
+    def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
+        super(BlockMasking, self).__init__(**kwargs)
+        self.block_size = block_size
+        self.masking_ratio = masking_ratio
+
+    def call(self, x, training=None):
+        if not training:
+            return x  # No masking during inference
+
+        input_shape = tf.shape(x)
+        batch_size, h, w, d, c = input_shape[0], input_shape[1], input_shape[2], input_shape[3], input_shape[4]
+
+        num_blocks_h = tf.cast(tf.math.ceil(tf.cast(h, tf.float32) / self.block_size), tf.int32)
+        num_blocks_w = tf.cast(tf.math.ceil(tf.cast(w, tf.float32) / self.block_size), tf.int32)
+        total_blocks = num_blocks_h * num_blocks_w
+
+        num_keep_blocks = tf.cast(
+            tf.round((1.0 - self.masking_ratio) * tf.cast(total_blocks, tf.float32)),
+            tf.int32
+        )
+
+        def single_channel_mask(_):
+            keep_indices = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
+            flat_mask = tf.scatter_nd(
+                indices=tf.expand_dims(keep_indices, 1),
+                updates=tf.ones([num_keep_blocks], dtype=tf.float32),
+                shape=[total_blocks]
+            )
+            mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+            mask_2d = tf.repeat(mask_2d, repeats=self.block_size, axis=0)
+            mask_2d = tf.repeat(mask_2d, repeats=self.block_size, axis=1)
+            mask_2d = mask_2d[:h, :w]
+            mask_3d = tf.expand_dims(mask_2d, axis=-1)
+            mask_3d = tf.tile(mask_3d, [1, 1, d])
+            return mask_3d
+
+        channel_masks = tf.map_fn(
+            single_channel_mask,
+            elems=tf.range(c),
+            fn_output_signature=tf.float32
+        )  # (C, H, W, D)
+
+        channel_masks = tf.transpose(channel_masks, [1, 2, 3, 0])  # (H, W, D, C)
+        channel_masks = tf.expand_dims(channel_masks, axis=0)     # (1, H, W, D, C)
+        full_mask = tf.tile(channel_masks, [batch_size, 1, 1, 1, 1])  # (B, H, W, D, C)
+
+        return x * tf.cast(full_mask, x.dtype)
+    
+class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
+    def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
+        super(BlockMaskingPerDepthChannel, self).__init__(**kwargs)
+        self.block_size = block_size
+        self.masking_ratio = masking_ratio
+
+    def call(self, x, training=None):
+        if not training:
+            return x  # No masking during inference
+
+        def sample_mask_fn(sample):  # sample shape: (H, W, D, C)
+            h = tf.shape(sample)[0]
+            w = tf.shape(sample)[1]
+            d = tf.shape(sample)[2]
+            c = tf.shape(sample)[3]
+
+            num_blocks_h = tf.math.floordiv(h, self.block_size)
+            num_blocks_w = tf.math.floordiv(w, self.block_size)
+            total_blocks = num_blocks_h * num_blocks_w
+
+            num_keep_blocks = tf.cast(
+                tf.math.round((1.0 - self.masking_ratio) * tf.cast(total_blocks, tf.float32)),
+                tf.int32
+            )
+
+            def mask_one(_):
+                keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
+                flat_mask = tf.scatter_nd(
+                    indices=tf.expand_dims(keep_idx, 1),
+                    updates=tf.ones([num_keep_blocks], dtype=tf.float32),
+                    shape=[total_blocks]
+                )
+                mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                mask_2d = tf.repeat(mask_2d, self.block_size, axis=0)
+                mask_2d = tf.repeat(mask_2d, self.block_size, axis=1)
+                return mask_2d[:h, :w]
+
+            masks = tf.map_fn(mask_one, tf.range(d * c), dtype=tf.float32)
+            masks = tf.reshape(masks, [d, c, h, w])
+            masks = tf.transpose(masks, [2, 3, 0, 1])  # (H, W, D, C)
+
+            return sample * tf.cast(masks, sample.dtype)
+
+        return tf.map_fn(sample_mask_fn, x)
+
 class UnetModel():
     def __init__(self, params):
         self.params = params
@@ -213,19 +320,19 @@ class UnetModel():
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking_per_channel(inOP)
+        inOP = BlockMaskingPerDepthChannel(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking_per_channel(inOP)
+        inOP = BlockMaskingPerDepthChannel(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)  
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = self.block_masking_per_channel(inOP)
+        inOP = BlockMaskingPerDepthChannel(inOP)
 
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
@@ -236,21 +343,21 @@ class UnetModel():
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_depth_channel(inFL)
+        inFL = BlockMasking(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_depth_channel(inFL)
+        inFL = BlockMasking(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = self.block_masking_per_depth_channel(inFL)
+        inFL = BlockMasking(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
