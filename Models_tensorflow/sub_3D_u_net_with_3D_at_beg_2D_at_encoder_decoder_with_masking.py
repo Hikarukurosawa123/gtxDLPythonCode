@@ -3,6 +3,7 @@ from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Co
 from tensorflow import keras
 
 import tensorflow as tf 
+@register_keras_serializable()
 
 class RandomMaskingLayer(tf.keras.layers.Layer):
     def __init__(self, rate):

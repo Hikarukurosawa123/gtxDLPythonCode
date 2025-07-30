@@ -32,7 +32,7 @@ class MonteCarloDropout(Dropout):
     def call(self, inputs):
         return super().call(inputs, training=True)
     
-
+from Models_tensorflow.sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder_with_masking import BlockMasking, BlockMaskingPerChannel
     
 class Helper(Operations):
     def __init__(self):
@@ -170,7 +170,10 @@ class Helper(Operations):
                     break
                 else:
                     #if running from local file 
-                    self.modelD = load_model(loadFile, compile=False)
+                    #self.modelD = load_model(loadFile, compile=False)
+                    self.modelD = load_model(loadFile, compile=False, custom_objects={
+                    'BlockMasking': BlockMasking,
+                    'BlockMaskingPerChannel': BlockMaskingPerChannel})
                     break
 
             else: # If the modelD attribute does not exist
