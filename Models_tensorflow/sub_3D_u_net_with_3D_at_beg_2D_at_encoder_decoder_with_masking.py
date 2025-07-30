@@ -320,19 +320,19 @@ class UnetModel():
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel(inOP)
+        inOP = BlockMaskingPerDepthChannel()(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel(inOP)
+        inOP = BlockMaskingPerDepthChannel()(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)  
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel(inOP)
+        inOP = BlockMaskingPerDepthChannel()(inOP)
 
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
@@ -343,21 +343,21 @@ class UnetModel():
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking(inFL)
+        inFL = BlockMasking()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking(inFL)
+        inFL = BlockMasking()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking(inFL)
+        inFL = BlockMasking()(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
