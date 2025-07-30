@@ -110,6 +110,50 @@ class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
             return sample * tf.cast(masks, sample.dtype)
 
         return tf.map_fn(sample_mask_fn, x)
+    
+class BlockMaskingPerChannel(tf.keras.layers.Layer):
+    def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
+        super(BlockMaskingPerChannel, self).__init__(**kwargs)
+        self.block_size = block_size
+        self.masking_ratio = masking_ratio
+
+    def call(self, x, training=None):
+        if not training:
+            return x  # skip masking at inference time
+
+        def mask_fn(tensor):  # shape: (H, W, C)
+            h = tf.shape(tensor)[0]
+            w = tf.shape(tensor)[1]
+            c = tf.shape(tensor)[2]
+
+            num_blocks_h = tf.math.floordiv(h + self.block_size - 1, self.block_size)
+            num_blocks_w = tf.math.floordiv(w + self.block_size - 1, self.block_size)
+            total_blocks = num_blocks_h * num_blocks_w
+
+            num_keep_blocks = tf.cast(
+                (1.0 - self.masking_ratio) * tf.cast(total_blocks, tf.float32),
+                tf.int32
+            )
+
+            def mask_one_channel(_):
+                keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
+                flat_mask = tf.scatter_nd(
+                    indices=tf.expand_dims(keep_idx, 1),
+                    updates=tf.ones([num_keep_blocks], dtype=tf.float32),
+                    shape=[total_blocks]
+                )
+                mask_grid = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
+                mask_grid = tf.repeat(mask_grid, self.block_size, axis=0)
+                mask_grid = tf.repeat(mask_grid, self.block_size, axis=1)
+                return mask_grid[:h, :w]
+
+            masks = tf.map_fn(mask_one_channel, tf.range(c), dtype=tf.float32)
+            mask_stack = tf.transpose(masks, perm=[1, 2, 0])  # (H, W, C)
+
+            return tensor * tf.cast(mask_stack, tensor.dtype)
+
+        return tf.map_fn(mask_fn, x)  # apply over batch (B, H, W, C)
+
 
 class UnetModel():
     def __init__(self, params):
@@ -320,19 +364,19 @@ class UnetModel():
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP_beg)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel()(inOP)
+        inOP = BlockMaskingPerChannel()(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel()(inOP)
+        inOP = BlockMaskingPerChannel()(inOP)
 
         inOP = Conv2D(filters=int(self.params['nFilters2D']/2), kernel_size=self.params['kernelConv2D'], strides=self.params['strideConv2D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inOP)
         #inOP = Dropout(0.5)(inOP)  
         #inOP = self.random_masking(inOP, 0.5)
-        inOP = BlockMaskingPerDepthChannel()(inOP)
+        inOP = BlockMaskingPerChannel()(inOP)
 
         ## Fluorescence Input Branch ##
         #inFL = Reshape((inFL_beg.shape[1], inFL_beg.shape[2], 1,inFL_beg.shape[3]))(inFL_beg)
