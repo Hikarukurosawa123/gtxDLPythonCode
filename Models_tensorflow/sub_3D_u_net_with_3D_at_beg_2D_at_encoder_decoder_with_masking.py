@@ -387,21 +387,21 @@ class UnetModel():
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking()(inFL)
+        inFL = BlockMaskingPerDepthChannel()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking()(inFL)
+        inFL = BlockMaskingPerDepthChannel()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
         #inFL = Dropout(0.5)(inFL)
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
-        inFL = BlockMasking()(inFL)
+        inFL = BlockMaskingPerDepthChannel()(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
