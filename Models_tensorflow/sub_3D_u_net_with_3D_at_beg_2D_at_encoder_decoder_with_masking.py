@@ -68,28 +68,25 @@ class BlockMasking(tf.keras.layers.Layer):
     
 class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
     def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
-        super(BlockMaskingPerDepthChannel, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.block_size = block_size
         self.masking_ratio = masking_ratio
 
     def call(self, x, training=None):
         if not training:
-            return x  # No masking during inference
+            return x
 
-        def sample_mask_fn(sample):  # sample shape: (H, W, D, C)
+        def sample_mask_fn(sample):  # sample: (H, W, D, C)
             h = tf.shape(sample)[0]
             w = tf.shape(sample)[1]
             d = tf.shape(sample)[2]
             c = tf.shape(sample)[3]
 
-            num_blocks_h = tf.math.floordiv(h, self.block_size)
-            num_blocks_w = tf.math.floordiv(w, self.block_size)
+            num_blocks_h = tf.cast(tf.math.ceil(tf.cast(h, tf.float32) / self.block_size), tf.int32)
+            num_blocks_w = tf.cast(tf.math.ceil(tf.cast(w, tf.float32) / self.block_size), tf.int32)
             total_blocks = num_blocks_h * num_blocks_w
 
-            num_keep_blocks = tf.cast(
-                tf.math.round((1.0 - self.masking_ratio) * tf.cast(total_blocks, tf.float32)),
-                tf.int32
-            )
+            num_keep_blocks = tf.cast((1.0 - self.masking_ratio) * tf.cast(total_blocks, tf.float32), tf.int32)
 
             def mask_one(_):
                 keep_idx = tf.random.shuffle(tf.range(total_blocks))[:num_keep_blocks]
@@ -101,15 +98,18 @@ class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
                 mask_2d = tf.reshape(flat_mask, [num_blocks_h, num_blocks_w])
                 mask_2d = tf.repeat(mask_2d, self.block_size, axis=0)
                 mask_2d = tf.repeat(mask_2d, self.block_size, axis=1)
-                return mask_2d[:h, :w]
+                mask_2d = mask_2d[:h, :w]  # final shape (h, w)
+                return mask_2d
 
-            masks = tf.map_fn(mask_one, tf.range(d * c), dtype=tf.float32)
-            masks = tf.reshape(masks, [d, c, h, w])
-            masks = tf.transpose(masks, [2, 3, 0, 1])  # (H, W, D, C)
+            # Now build masks of shape (d, c, h, w)
+            masks = tf.map_fn(mask_one, tf.range(d * c), fn_output_signature=tf.TensorSpec((None, None), tf.float32))
+            masks = tf.reshape(masks, (d, c, h, w))
+            masks = tf.transpose(masks, (2, 3, 0, 1))  # → (h, w, d, c)
 
             return sample * tf.cast(masks, sample.dtype)
 
         return tf.map_fn(sample_mask_fn, x)
+
     
 class BlockMaskingPerChannel(tf.keras.layers.Layer):
     def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
