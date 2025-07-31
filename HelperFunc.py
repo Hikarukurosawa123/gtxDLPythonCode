@@ -171,9 +171,14 @@ class Helper(Operations):
                 else:
                     #if running from local file 
                     #self.modelD = load_model(loadFile, compile=False)
-                    self.modelD = load_model(loadFile, compile=False, custom_objects={
-                    'BlockMasking': BlockMasking,
-                    'BlockMaskingPerChannel': BlockMaskingPerChannel})
+                    # self.modelD = load_model(loadFile, compile=False, custom_objects={
+                    # 'BlockMasking': BlockMasking,
+                    # 'BlockMaskingPerChannel': BlockMaskingPerChannel})
+                    #model = build_model()  # recreate architecture in code
+
+                    self.modelD = self.Model_tf(model_name = self.model_name)
+
+                    self.modelD.load_weights(loadFile)  # or .h5
                     break
 
             else: # If the modelD attribute does not exist
@@ -360,7 +365,7 @@ class Helper(Operations):
         min_depth_error_std = np.std(np.abs(DFP_min - DF_min))
         print("Average Minimum Depth Error (SD) : {min_depth_error} ({min_depth_error_std})".format(min_depth_error = min_depth_error, min_depth_error_std = min_depth_error_std))
 
-        
+        print("Minimum Depth (mm): ", DFP_min)
         ## Plot Correlations
         
         fig, (plt1, plt2) = plt.subplots(1, 2)

@@ -1,6 +1,7 @@
 from tensorflow.keras.models import Model
 from keras.layers import BatchNormalization, Input, concatenate, Conv2D, add, Conv3D, Reshape, SeparableConv2D, Dropout, MaxPool2D,MaxPool3D, UpSampling2D, ZeroPadding2D, Activation, ReLU, Lambda
 from tensorflow import keras
+from keras.saving import register_keras_serializable
 
 import tensorflow as tf 
 @register_keras_serializable()
@@ -66,6 +67,16 @@ class BlockMasking(tf.keras.layers.Layer):
         full_mask = tf.tile(channel_masks, [batch_size, 1, 1, 1, 1])  # (B, H, W, D, C)
 
         return x * tf.cast(full_mask, x.dtype)
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+    
+    def get_config(self):
+        config = super(BlockMasking, self).get_config()
+        # Add custom fields if any
+        return config
+
+
     
 class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
     def __init__(self, block_size=17, masking_ratio=0.5, **kwargs):
@@ -110,6 +121,14 @@ class BlockMaskingPerDepthChannel(tf.keras.layers.Layer):
             return sample * tf.cast(masks, sample.dtype)
 
         return tf.map_fn(sample_mask_fn, x)
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+    
+    def get_config(self):
+        config = super(BlockMasking, self).get_config()
+        # Add custom fields if any
+        return config
 
     
 class BlockMaskingPerChannel(tf.keras.layers.Layer):
@@ -154,6 +173,14 @@ class BlockMaskingPerChannel(tf.keras.layers.Layer):
             return tensor * tf.cast(mask_stack, tensor.dtype)
 
         return tf.map_fn(mask_fn, x)  # apply over batch (B, H, W, C)
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+    
+    def get_config(self):
+        config = super(BlockMasking, self).get_config()
+        # Add custom fields if any
+        return config
 
 
 class UnetModel():
@@ -389,6 +416,7 @@ class UnetModel():
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
         inFL = BlockMaskingPerDepthChannel()(inFL)
+        #inFL = BlockMasking()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
@@ -396,6 +424,7 @@ class UnetModel():
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
         inFL = BlockMaskingPerDepthChannel()(inFL)
+        #inFL = BlockMasking()(inFL)
 
         inFL = Conv3D(filters=int(self.params['nFilters3D']/2), kernel_size=self.params['kernelConv3D'], strides=self.params['strideConv3D'], 
                 padding='same', activation=self.params['activation'], data_format="channels_last")(inFL)
@@ -403,6 +432,7 @@ class UnetModel():
         #inFL = self.random_masking(inFL, 0.5)
         #inFL = self.block_masking(inFL)
         inFL = BlockMaskingPerDepthChannel()(inFL)
+        #inFL = BlockMasking()(inFL)
 
         ## Concatenate Branch ##
         inFL = Reshape((inFL.shape[1], inFL.shape[2], inFL.shape[3] * inFL.shape[4]))(inFL)
