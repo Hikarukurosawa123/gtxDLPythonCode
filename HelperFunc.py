@@ -170,15 +170,11 @@ class Helper(Operations):
                     break
                 else:
                     #if running from local file 
-                    #self.modelD = load_model(loadFile, compile=False)
-                    # self.modelD = load_model(loadFile, compile=False, custom_objects={
-                    # 'BlockMasking': BlockMasking,
-                    # 'BlockMaskingPerChannel': BlockMaskingPerChannel})
-                    #model = build_model()  # recreate architecture in code
+                    self.modelD = load_model(loadFile, compile=False)
+                    
+                    #self.modelD = self.Model_tf(model_name = self.model_name)
 
-                    self.modelD = self.Model_tf(model_name = self.model_name)
-
-                    self.modelD.load_weights(loadFile)  # or .h5
+                    #self.modelD.load_weights(loadFile)  # or .h5
                     break
 
             else: # If the modelD attribute does not exist
