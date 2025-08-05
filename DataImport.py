@@ -134,7 +134,7 @@ class Operations():
 
 
 
-    def importData(self, isTesting):
+    def importData(self,isTesting=True,quickTest=False):
         # Ask user where to load data from
         #source = input("Load data from [s3/local]: ").strip().lower()
 
