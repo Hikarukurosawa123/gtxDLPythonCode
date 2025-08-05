@@ -183,114 +183,13 @@ class Helper(Operations):
 
         print("end")
                 
-    
-        
     def visualize_feature_maps(self, num_layer):
 
         #choose model 
         self.modelD_visualize = Model(inputs=self.modelD.inputs, outputs=self.modelD.layers[num_layer].output)
 
         print("loaded")
-
-    def Analysis_auto_encoder_output(self, save_image=0):
-
-        self.import_data_for_testing()
-        self.indxIncl = np.nonzero(self.temp_DF_pre_conversion)
-
-        self.FL = np.array(self.FL)
-        self.OP = np.array(self.OP)
-
-        predict = self.modelD.predict([self.OP, self.FL], batch_size=32)
-
-        OP_predict=  predict[0]
-        FL_predict = predict[1]  # FL output
-
-        use_predict = 1
-
-        if use_predict:
-            self.OP = OP_predict
-            self.FL = FL_predict
-
-
-        print("OP_predict", OP_predict.shape)
-        print("FL_predict", FL_predict.shape)
-
-
-        self.save = 'y' if save_image else 'n'
-
-        # Error Stats
-        FL_error = FL_predict - self.FL
-        FL_erroravg = np.mean(abs(FL_error[self.indxIncl]))
-        FL_errorstd = np.std(abs(FL_error[self.indxIncl]))
-
-        plot_save_path = os.path.join('./predictions/' + self.folder_name)
-
-
-        for i in range(self.FL.shape[0]):
-            fl_channels = self.FL.shape[-1]  # 6
-
-            fig, axs = plt.subplots(2, fl_channels, figsize=(4 * fl_channels, 6))
-            plt.set_cmap('jet')
-
-            for c in range(fl_channels):
-                # Top row: True FL
-                true_img = self.FL[i, :, :, c]
-                vmin = np.percentile(true_img.flatten(), 2.5)
-                vmax = np.percentile(true_img.flatten(), 97.5)
-                im1 = axs[0, c].imshow(true_img, vmin=vmin, vmax=vmax)
-                axs[0, c].axis('off')
-                axs[0, c].set_title(f'True FL - Ch {c + 1}')
-                plt.colorbar(im1, ax=axs[0, c], fraction=0.046, pad=0.04)
-
-                # Bottom row: Predicted FL
-                pred_img = FL_predict[i, :, :, c]
-                vmin = np.percentile(pred_img.flatten(), 2.5)
-                vmax = np.percentile(pred_img.flatten(), 97.5)
-                im2 = axs[1, c].imshow(pred_img, vmin=vmin, vmax=vmax)
-                axs[1, c].axis('off')
-                axs[1, c].set_title(f'Pred FL - Ch {c + 1}')
-                plt.colorbar(im2, ax=axs[1, c], fraction=0.046, pad=0.04)
-
-            plt.tight_layout()
-            plt.show()
-
-            if self.save in ['y', 'Y']:
-                plot_save_combined = os.path.join(plot_save_path + f'_depth_{i}_FL_vertical.png')
-                plt.savefig(plot_save_combined, dpi=100, bbox_inches='tight')
-            plt.close()
-
-        for i in range(self.OP.shape[0]):
-            op_channels = self.OP.shape[-1]  # 2
-
-            fig, axs = plt.subplots(2, op_channels, figsize=(4 * op_channels, 6))
-            plt.set_cmap('jet')
-
-            for c in range(op_channels):
-                # Top row: True OP
-                true_img = self.OP[i, :, :, c]
-                vmin = np.percentile(true_img.flatten(), 2.5)
-                vmax = np.percentile(true_img.flatten(), 97.5)
-                im1 = axs[0, c].imshow(true_img, vmin=vmin, vmax=vmax)
-                axs[0, c].axis('off')
-                axs[0, c].set_title(f'True OP - Ch {c + 1}')
-                plt.colorbar(im1, ax=axs[0, c], fraction=0.046, pad=0.04)
-
-                # Bottom row: Predicted OP
-                pred_img = OP_predict[i, :, :, c]
-                vmin = np.percentile(pred_img.flatten(), 2.5)
-                vmax = np.percentile(pred_img.flatten(), 97.5)
-                im2 = axs[1, c].imshow(pred_img, vmin=vmin, vmax=vmax)
-                axs[1, c].axis('off')
-                axs[1, c].set_title(f'Pred OP - Ch {c + 1}')
-                plt.colorbar(im2, ax=axs[1, c], fraction=0.046, pad=0.04)
-
-
-
-
-            
-    
         
-
     def Analysis(self, save_image = 0):
         
         use_same_data = 0
@@ -455,25 +354,6 @@ class Helper(Operations):
             axs[1,2].axis('off')
             axs[1,2].set_title('|Error (ug/mL)|')
             plt.tight_layout()
-
-            # --- Plotting Mask if available ---
-            # if mask_P is not None:
-            #     fig_mask, axs_mask = plt.subplots(1, 3)
-            #     plt.set_cmap('gray')
-
-            #     axs_mask[0].imshow(self.mask[i,:,:])
-            #     axs_mask[0].axis('off')
-            #     axs_mask[0].set_title('True Mask')
-
-            #     axs_mask[1].imshow(mask_P[i,:,:])
-            #     axs_mask[1].axis('off')
-            #     axs_mask[1].set_title('Predicted Mask')
-
-            #     axs_mask[2].imshow(abs(self.mask[i,:,:] - mask_P[i,:,:]))
-            #     axs_mask[2].axis('off')
-            #     axs_mask[2].set_title('|Error|')
-
-            #     plt.tight_layout()
                             
             if self.save in ['Y', 'y']:
                 # Define base name
