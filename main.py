@@ -24,8 +24,8 @@ class DL(Utils, Helper, ModelInit, Operations):
         self.model_name = 'sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder' #'original_siamese_3DCNN' #
 
 if __name__ == "__main__":
-
-    Helper.Train()
+    model = DL()
+    model.Train()
 
         
     
