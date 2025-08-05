@@ -179,6 +179,8 @@ class Operations():
             self.dataset = mat73.loadmat(io.BytesIO(dataTemp))
 
         elif source == "local":
+
+            print("current workign directory: ", os.getcwd())
             default_local_path = './data/nImages10000_new.mat'
             
             if not os.path.isfile(default_local_path):
