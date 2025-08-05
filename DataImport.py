@@ -179,19 +179,20 @@ class Operations():
             self.dataset = mat73.loadmat(io.BytesIO(dataTemp))
 
         elif source == "local":
-            local_path = input('Enter full path to local .mat file: ').strip()
-            if not os.path.isfile(local_path):
-                print(f"❌ File not found: {local_path}")
+            default_local_path = './data/nImages10000_new.mat'
+            
+            if not os.path.isfile(default_local_path):
+                print(f"❌ File not found at default path: {default_local_path}")
                 return
 
-            self.file_key = local_path
+            self.file_key = default_local_path
             self.params["training_file_name"] = self.file_key
 
             if isTesting:
-                self.folder_name = Path(local_path).parent.name
+                self.folder_name = Path(default_local_path).parent.name
 
-            self.dataset = mat73.loadmat(local_path)
-            print(f"✅ Loaded data from local file: {local_path}")
+            self.dataset = mat73.loadmat(default_local_path)
+            print(f"✅ Loaded data from local file: {default_local_path}")
 
         else:
             print("❌ Invalid source. Please enter 's3' or 'local'.")
