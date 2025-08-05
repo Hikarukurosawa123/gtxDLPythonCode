@@ -15,6 +15,21 @@ import mat73
 from datetime import datetime
 from pathlib import Path
 import tensorflow as tf
+from tensorflow.keras.callbacks import Callback
+import time
+
+
+class EpochTimer(Callback):
+    def on_train_begin(self, logs=None):
+        self.epoch_times = []
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.start_time = time.time()
+
+    def on_epoch_end(self, epoch, logs=None):
+        elapsed = time.time() - self.start_time
+        self.epoch_times.append(elapsed)
+        print(f"⏱️ Epoch {epoch+1} time: {elapsed:.2f} seconds")
 
 class Operations():
     
@@ -117,57 +132,70 @@ class Operations():
         self.mask = self.DF == 0
         self.DF[self.mask] = self.background_val
 
-    def importData(self,isTesting=True,quickTest=False):
 
-        #determine where to import testing/training data from 
-        s3_client = boto3.client('s3')
-        time.sleep(1.5)
 
-        print(isTesting)
+    def import_data(self, isTesting):
+        # Ask user where to load data from
+        source = input("Load data from [s3/local]: ").strip().lower()
 
-        
-        mode = "TestingData" if isTesting else "TrainingData"
+        if source == "s3":
+            # Connect to S3
+            s3_client = boto3.client('s3')
+            time.sleep(1.5)
 
-        try:
-            response = s3_client.list_objects_v2(Bucket=self.bucket, Prefix=mode)
-            if 'Contents' not in response:
-                print("No files found in the bucket.")
+            mode = "TestingData" if isTesting else "TrainingData"
+
+            try:
+                response = s3_client.list_objects_v2(Bucket=self.bucket, Prefix=mode)
+                if 'Contents' not in response:
+                    print("No files found in the bucket.")
+                    return
+
+                print(f"Listing .mat files for: {mode}")
+                for item in response['Contents']:
+                    key = item['Key']
+                    if key.endswith(".mat"):
+                        print(key)
+
+            except Exception as e:
+                print(f"Error accessing S3 bucket: {e}")
                 return
 
-            print(f"Listing .mat files for: {mode}")
-            for item in response['Contents']:
-                key = item['Key']
+            time.sleep(1.5)
 
-                if key.endswith(".mat"):
-                    print(key)
+            self.file_key = input('Enter the name of the dataset you want to import (e.g., TestingData/mydata.mat): ').strip()
+            self.params["training_file_name"] = self.file_key
 
-        except Exception as e:
-            print(f"Error accessing S3 bucket: {e}")
+            # Extract parent folder name for testing case
+            if isTesting: 
+                print("file key: ", self.file_key)
+                self.folder_name = str(Path(self.file_key).relative_to("TestingData").parent.as_posix().replace("/", "_"))
 
-        # Enter the name of the dataset you want to import
-        # Note: To import new data, go to the desired bucket in AWS and upload data
-        
-        #time delay to let data names get printed
-        time.sleep(1.5)
+            # Download and load from S3
+            obj = s3_client.get_object(Bucket=self.bucket, Key=self.file_key)
+            dataTemp = obj['Body'].read()
+            self.dataset = mat73.loadmat(io.BytesIO(dataTemp))
 
+        elif source == "local":
+            local_path = input('Enter full path to local .mat file: ').strip()
+            if not os.path.isfile(local_path):
+                print(f"❌ File not found: {local_path}")
+                return
 
-        self.file_key = str(input('Enter the name of the dataset you want to import e.g. matALL.mat '))
-        
-        self.params["training_file_name"] = self.file_key
+            self.file_key = local_path
+            self.params["training_file_name"] = self.file_key
 
-        #import data either in AWS cloud or in local desktop 
-        
-        obj = s3_client.get_object(Bucket=self.bucket, Key=self.file_key)
+            if isTesting:
+                self.folder_name = Path(local_path).parent.name
 
-        #extract the parent folder name of the .mat file 
-        if isTesting: 
-            print("file key: ", self.file_key)
-            self.folder_name = str(Path(self.file_key).relative_to("TestingData").parent.as_posix().replace("/", "_"))
+            self.dataset = mat73.loadmat(local_path)
+            print(f"✅ Loaded data from local file: {local_path}")
 
-        dataTemp = obj['Body'].read()
+        else:
+            print("❌ Invalid source. Please enter 's3' or 'local'.")
+            return
+
     
-        self.dataset = mat73.loadmat((io.BytesIO(dataTemp)))
-  
         apply_normalization =0
         apply_min_max_normalization = 0
 
@@ -471,7 +499,7 @@ class Operations():
         self.exportName = input('Enter a name for exporting the model: ')
         lrDecay = ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=5, verbose=1, min_delta=5e-5)
         earlyStopping = EarlyStopping(monitor='val_loss', min_delta=5e-5, patience=20, verbose=1, mode='auto')
-        callbackList = [earlyStopping,lrDecay]
+        callbackList = [earlyStopping,lrDecay, EpochTimer()]
 
         self.modelD = self.Model_tf(model_name = self.model_name)
     

@@ -25,7 +25,7 @@ class DL(Utils, Helper, ModelInit, Operations):
 
 if __name__ == "__main__":
 
-    pass
+    Helper.Train()
 
         
     
