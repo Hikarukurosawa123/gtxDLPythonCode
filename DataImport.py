@@ -230,7 +230,7 @@ class Operations():
     
         self.temp_DF_pre_conversion = self.DF
         
-        self.background_val = str(input('Enter the value of the background'))
+        self.background_val = 10#str(input('Enter the value of the background'))
         if self.background_val == '':
             self.background_val = 0 #default to zero
         
@@ -267,45 +267,50 @@ class Operations():
 
         if getDims == 4:
             numSets = int(np.shape(self.FL)[0])
-            if quickTest ==False:
-                while True:
-                    check = input('There are ' + str(numSets) + ' inputs in this directory, use them all? (Y/N) ')
-                    if check in ['Y','y']:
-                        break
-                    elif check in ['N','n']:
-                        trynumSets = int(input('Input the number of sets you want: '))
-                        if trynumSets <= numSets:
-                            numSets = trynumSets
-                        else:
-                            raise Exception('The number of sets you want to use is greater than the total number of sets.')
-                        break
-                    elif check == '':
-                        break
-                    else:
-                        print('You did not select yes/no, try again or enter nothing to escape')
+            # if quickTest ==False:
+            #     while True:
+            #         check = input('There are ' + str(numSets) + ' inputs in this directory, use them all? (Y/N) ')
+            #         if check in ['Y','y']:
+            #             break
+            #         elif check in ['N','n']:
+            #             trynumSets = int(input('Input the number of sets you want: '))
+            #             if trynumSets <= numSets:
+            #                 numSets = trynumSets
+            #             else:
+            #                 raise Exception('The number of sets you want to use is greater than the total number of sets.')
+            #             break
+            #         elif check == '':
+            #             break
+            #         else:
+            #             print('You did not select yes/no, try again or enter nothing to escape')
 
-                sizeFx = int(np.shape(self.FL)[-1])
-                while True:
-                    check = input('There are ' + str(sizeFx) + ' spatial frequencies in the FL input, use them all? (Y/N) ')
-                    if check in ['Y','y']:
-                        self.params['nF'] = sizeFx
-                        indxFx = np.arange(0,sizeFx,1)
-                        break
-                    elif check in ['N','n']:
-                        useFx = int(input('How many spatial frequencies would you like to use? Number must be a factor of the total number of spatial frequencies: '))
-                        self.params['nF'] = useFx
-                        indxFx = np.arange(0,useFx,1)
-                        self.FL = self.FL[0:sizeFx:int(sizeFx/useFx),:,:,:]
-                        break
-                    elif check == '':
-                        break
-                    else:
-                        print('You did not select yes/no, try again or enter nothing to escape')
-            else:
-                numSets = int(np.shape(self.FL)[3])
-                sizeFx = self.params['nF']
-                indxFx = np.arange(0,sizeFx,1)
-        
+            #     sizeFx = int(np.shape(self.FL)[-1])
+            #     while True:
+            #         check = input('There are ' + str(sizeFx) + ' spatial frequencies in the FL input, use them all? (Y/N) ')
+            #         if check in ['Y','y']:
+            #             self.params['nF'] = sizeFx
+            #             indxFx = np.arange(0,sizeFx,1)
+            #             break
+            #         elif check in ['N','n']:
+            #             useFx = int(input('How many spatial frequencies would you like to use? Number must be a factor of the total number of spatial frequencies: '))
+            #             self.params['nF'] = useFx
+            #             indxFx = np.arange(0,useFx,1)
+            #             self.FL = self.FL[0:sizeFx:int(sizeFx/useFx),:,:,:]
+            #             break
+            #         elif check == '':
+            #             break
+            #         else:
+            #             print('You did not select yes/no, try again or enter nothing to escape')
+            # else:
+            #     numSets = int(np.shape(self.FL)[3])
+            #     sizeFx = self.params['nF']
+            #     indxFx = np.arange(0,sizeFx,1)
+            
+            sizeFx = int(np.shape(self.FL)[-1])
+            self.params['nF'] = sizeFx
+            indxFx = np.arange(0,sizeFx,1)
+
+
             start = time.perf_counter()
             
             stop = time.perf_counter()
