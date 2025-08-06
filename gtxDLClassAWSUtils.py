@@ -101,7 +101,9 @@ class Utils():
             params['kernelResBlock2D'] = (3,3)
             params['exportName'] = ' debug_test2'
             params['background'] = 10 # Background value for the input maps, used to mask out the background in the loss function
-            params['source'] = 'local' # Source of the data, either 's3' or 'local'
+            params['source'] = 'local' # Source of the data, either 's3' or 'local'            
+            params['dataPath'] = './data/nImages10000_new.mat'
+
             
         elif case == 'Default4fx':
             params['nF']=4
