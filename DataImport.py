@@ -565,11 +565,16 @@ class Operations():
             #allow multiple gpu training 
 
             strategy = tf.distribute.MirroredStrategy()
+            with strategy.scope():
+                self.modelD = self.Model_tf(model_name=self.params['modelName'], class_name = self.params['className'])  # model build + compile here
+                if isTransfer:
+                    self.modelD.load_weights(loadFile)
+
+            strategy = tf.distribute.MirroredStrategy()
             print("GPUs available:", tf.config.list_physical_devices('GPU'))
 
-            with strategy.scope():
-                self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
-                                    epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
+            self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
+                                epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):
             fileName = self.exportPath+'_params.xml'

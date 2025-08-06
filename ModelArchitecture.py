@@ -12,7 +12,7 @@ class ModelInit():
                 self.model_dir = model_dir
         
         
-        def Model_tf(self, model_name, class_name='UnetModel'):
+        def Model_tf(self, model_name, class_name):
                 """
                 Dynamically load a model class and return the built model.
 
