@@ -514,7 +514,6 @@ class Operations():
         earlyStopping = EarlyStopping(monitor='val_loss', min_delta=5e-5, patience=20, verbose=1, mode='auto')
         callbackList = [earlyStopping,lrDecay, EpochTimer()]
 
-        self.modelD = self.Model_tf(model_name = self.model_name)
 
         #allow multiple gpu training 
         print("GPUs available:", tf.config.list_physical_devices('GPU'))
