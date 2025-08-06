@@ -562,8 +562,13 @@ class Operations():
             self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=50, verbose=1, shuffle=True, callbacks=callbackList)     
         else:
-        
-            self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
+            #allow multiple gpu training 
+
+            strategy = tf.distribute.MirroredStrategy()
+            print("GPUs available:", tf.config.list_physical_devices('GPU'))
+
+            with strategy.scope():
+                self.history = self.modelD.fit([self.OP, self.FL], [self.QF, self.DF],validation_split=0.2,batch_size=self.params['batch'],
                                     epochs=self.params['epochs'], verbose=1, shuffle=True, callbacks=callbackList)    
         
         if hasattr(self,'exportPath'):
