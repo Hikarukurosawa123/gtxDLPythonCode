@@ -66,30 +66,35 @@ class Operations():
     def Train(self):
             """The Train method is designed to guide the user through the process of training a deep neural network; i.e., reading and scaling training data, modelling, fitting, plotting, etc."""
             self.importData(isTesting=False,quickTest=False)
-            while True:
-                callParams = input('Adjust parameters before modelling and fitting? (Y/N) ')
-                if callParams in ['Y','y']:
-                    self.Params()
-                    break
-                elif callParams in ['N','n']:
-                    break
-                else:
-                    print('Invalid entry.')
+            # while True:
+            #     callParams = input('Adjust parameters before modelling and fitting? (Y/N) ')
+            #     if callParams in ['Y','y']:
+            #         self.Params()
+            #         break
+            #     elif callParams in ['N','n']:
+            #         break
+            #     else:
+            #         print('Invalid entry.')
                     
             
-            while True:
-                isTransferTrain = input('Are you transfer training (i.e., Initial weights come from another pre-trained model)? (Y/N) ')
-                if isTransferTrain in ['Y','y']:
-                    self.Fit(isTransfer=True)
-                    break
-                elif isTransferTrain in ['N','n']:
-                    self.Fit(isTransfer=False)
-                    break
-                else:
-                    print('Invalid entry.')
+            # while True:
+            #     isTransferTrain = input('Are you transfer training (i.e., Initial weights come from another pre-trained model)? (Y/N) ')
+            #     if isTransferTrain in ['Y','y']:
+            #         self.Fit(isTransfer=True)
+            #         break
+            #     elif isTransferTrain in ['N','n']:
+            #         self.Fit(isTransfer=False)
+            #         break
+            #     else:
+            #         print('Invalid entry.')
 
             #self.Plot(isTraining=True)
+
+            self.Fit(isTransfer=False)
+            callParams = False
             return None
+    
+    
         
     def Params(self):
         print(self.params.keys()) # Print the keys in the parameters dictionary so that the user knows their options
@@ -138,7 +143,7 @@ class Operations():
         # Ask user where to load data from
         #source = input("Load data from [s3/local]: ").strip().lower()
 
-        source = "local"
+        source = self.params['source']#"local"
 
         if source == "s3":
             # Connect to S3
@@ -224,13 +229,11 @@ class Operations():
             self.QF = np.expand_dims(self.dataset['QF'], axis=0)
             self.RE = np.expand_dims(self.dataset['RE'], axis=0)
             self.FL = np.expand_dims(self.dataset['FL'], axis=0)
-
-        
-
     
         self.temp_DF_pre_conversion = self.DF
         
-        self.background_val = 10#str(input('Enter the value of the background'))
+        self.background_val = self.params['background'] # Background value for the input maps, used to mask out the background in the loss function 
+        #str(input('Enter the value of the background'))
         if self.background_val == '':
             self.background_val = 0 #default to zero
         
@@ -305,7 +308,7 @@ class Operations():
             #     numSets = int(np.shape(self.FL)[3])
             #     sizeFx = self.params['nF']
             #     indxFx = np.arange(0,sizeFx,1)
-            
+
             sizeFx = int(np.shape(self.FL)[-1])
             self.params['nF'] = sizeFx
             indxFx = np.arange(0,sizeFx,1)
@@ -506,7 +509,7 @@ class Operations():
     
     def Fit(self,isTransfer):
         # Where to export information about the fit
-        self.exportName = input('Enter a name for exporting the model: ')
+        self.exportName = self.params['exportName'] #input('Enter a name for exporting the model: ')
         lrDecay = ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=5, verbose=1, min_delta=5e-5)
         earlyStopping = EarlyStopping(monitor='val_loss', min_delta=5e-5, patience=20, verbose=1, mode='auto')
         callbackList = [earlyStopping,lrDecay, EpochTimer()]
