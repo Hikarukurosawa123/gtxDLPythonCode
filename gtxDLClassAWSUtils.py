@@ -103,7 +103,7 @@ class Utils():
             params['background'] = 10 # Background value for the input maps, used to mask out the background in the loss function
             params['source'] = 's3' # Source of the data, either 's3' or 'local'            
             params['dataPath'] = './data/nImages10000_new.mat'
-            params['modelName'] = 'sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder' #'original_siamese_3DCNN' #
+            params['modelName'] = 'sub_2D_u_net' #'original_siamese_3DCNN' #
             params['className'] = 'UnetModel' # Class name of the model to be loaded
             
         elif case == 'Default4fx':
