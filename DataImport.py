@@ -221,6 +221,10 @@ class Operations():
         self.RE = self.dataset['RE']
         self.thickness = None
 
+        
+
+
+
         if 'th' in self.dataset:
             self.thickness = self.dataset['th']
         
