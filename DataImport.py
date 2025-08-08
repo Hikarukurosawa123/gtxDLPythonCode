@@ -143,7 +143,7 @@ class Operations():
         # Ask user where to load data from
         #source = input("Load data from [s3/local]: ").strip().lower()
 
-        source = self.params['source']#"local"
+        source = 's3'#self.params['source']#"local"
 
         if source == "s3":
             # Connect to S3
@@ -151,13 +151,15 @@ class Operations():
 
             mode = "TestingData" if isTesting else "TrainingData"
 
-            default_local_path = self.params['dataPath'] 
+            #default_local_path = self.params['dataPath'] 
 
-            if not os.path.isfile(default_local_path):
-                print(f"❌ File not found at default path: {default_local_path}")
-                return
+            #if not os.path.isfile(default_local_path):
+            #    print(f"❌ File not found at default path: {default_local_path}")
+            #    return
 
-            self.params["training_file_name"] = default_local_path
+            
+
+            #self.params["training_file_name"] = default_local_path
 
             try:
                 response = s3_client.list_objects_v2(Bucket=self.bucket, Prefix=mode)
@@ -174,14 +176,16 @@ class Operations():
             except Exception as e:
                 print(f"Error accessing S3 bucket: {e}")
                 return
+            
+            self.file_key = input('Enter the name of the dataset you want to import (e.g., TestingData/mydata.mat): ')
+            self.params["training_file_name"] = self.file_key
 
             # Extract parent folder name for testing case
             if isTesting: 
-                print("file key: ", self.file_key)
                 self.folder_name = str(Path(self.file_key).relative_to("TestingData").parent.as_posix().replace("/", "_"))
 
             # Download and load from S3
-            obj = s3_client.get_object(Bucket=self.bucket, Key=default_local_path)
+            obj = s3_client.get_object(Bucket=self.bucket, Key=self.file_key)
             dataTemp = obj['Body'].read()
             self.dataset = mat73.loadmat(io.BytesIO(dataTemp))
 
@@ -503,8 +507,6 @@ class Operations():
         self.upload_file(params_case_file_name)
 
         print("file uploaded to AWS")
-
-
 
     
     def Fit(self,isTransfer):
