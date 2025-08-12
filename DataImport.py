@@ -251,7 +251,7 @@ class Operations():
         print("self.DF shape", self.DF.shape)
 
         #pad with ones temporarily 
-        pad = 0
+        pad = 1
 
         def pad_with_sample_mean(arr, pad_width, is_4d=False):
             padded = []
@@ -264,6 +264,8 @@ class Operations():
                     padded_sample = np.pad(sample, pad_width=((0, 1), (0, 1)), mode='constant', constant_values=sample_mean)
                 padded.append(padded_sample)
             return np.stack(padded)
+        
+        print(pad)
 
         if pad:
             self.DF = pad_with_sample_mean(self.DF, pad_width=((0, 1), (0, 1)), is_4d=False)
@@ -271,6 +273,7 @@ class Operations():
             self.OP = pad_with_sample_mean(self.OP, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
             self.RE = pad_with_sample_mean(self.RE, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
             self.FL = pad_with_sample_mean(self.FL, pad_width=((0, 1), (0, 1), (0, 0)), is_4d=True)
+        print("self.FL shape", self.FL.shape)
 
         # Check whether the user is using the single or multiple MAT format 
         # I.e., looking at individual MAT files (getDims=3) or looking at MAT files with more than one sample (getDim=4)
