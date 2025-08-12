@@ -251,7 +251,7 @@ class Operations():
         print("self.DF shape", self.DF.shape)
 
         #pad with ones temporarily 
-        pad = 1
+        pad = 0
 
         def pad_with_sample_mean(arr, pad_width, is_4d=False):
             padded = []
