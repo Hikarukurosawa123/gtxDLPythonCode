@@ -99,13 +99,13 @@ class Utils():
             params['kernelConv2D'] = (3,3)
             params['strideConv2D'] = (1,1)
             params['kernelResBlock2D'] = (3,3)
-            params['exportName'] = ' 20250811_DT_to_MCX_2D_u_net_for_transfer_training'
+            params['exportName'] = ' 20250812_DT_no_dropout_2D_u_net_for_transfer_training_later'
             params['background'] = 10 # Background value for the input maps, used to mask out the background in the loss function
             params['source'] = 's3' # Source of the data, either 's3' or 'local'            
             params['dataPath'] = './data/nImages10000_new.mat'
             params['modelName'] = 'sub_2D_u_net' #'original_siamese_3DCNN' #
             params['className'] = 'UnetModel' # Class name of the model to be loaded
-            params['transferLearning'] = True
+            params['transferLearning'] = False
             
         elif case == 'Default4fx':
             params['nF']=4
