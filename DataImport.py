@@ -526,8 +526,8 @@ class Operations():
         strategy = tf.distribute.MirroredStrategy()
         with strategy.scope():
             self.modelD = self.Model_tf(model_name=self.params['modelName'], class_name = self.params['className'])  # model build + compile here
-            if isTransfer:
-                self.modelD.load_weights(loadFile)
+            # if isTransfer:
+            #     self.modelD.load_weights(loadFile)
     
         if len(self.exportName) > 0:
             os.makedirs("ModelParameters/"+self.exportName)
