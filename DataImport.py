@@ -90,7 +90,7 @@ class Operations():
 
             #self.Plot(isTraining=True)
 
-            self.Fit(isTransfer=self.Params['transferLearning'])
+            self.Fit(isTransfer=self.params['transferLearning'])
             callParams = False
             return None
     
