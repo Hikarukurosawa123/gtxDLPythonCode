@@ -90,7 +90,7 @@ class Operations():
 
             #self.Plot(isTraining=True)
 
-            self.Fit(isTransfer=False)
+            self.Fit(isTransfer=self.Params['transferLearning'])
             callParams = False
             return None
     
@@ -221,7 +221,7 @@ class Operations():
         self.RE = self.dataset['RE']
         self.thickness = None
 
-        
+
 
 
 

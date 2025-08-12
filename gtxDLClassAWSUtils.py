@@ -105,6 +105,7 @@ class Utils():
             params['dataPath'] = './data/nImages10000_new.mat'
             params['modelName'] = 'sub_2D_u_net' #'original_siamese_3DCNN' #
             params['className'] = 'UnetModel' # Class name of the model to be loaded
+            params['transferLearning'] = True
             
         elif case == 'Default4fx':
             params['nF']=4
