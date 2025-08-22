@@ -228,6 +228,21 @@ class Helper(Operations):
         QF_errorstd = np.std(abs(QF_error[self.indxIncl]))
         print('Average Depth Error (SD): {}({}) mm'.format(float('%.5g' % DF_erroravg),float('%.5g' % DF_errorstd)))
         print('Average Concentration Error (SD): {}({}) ug/mL'.format(float('%.5g' % QF_erroravg),float('%.5g' % QF_errorstd)))
+
+        depth_true = self.DF[self.indxIncl]
+        depth_error_abs = np.abs(DF_error[self.indxIncl])
+
+        regions = [(0,5), (5,10), (10,15)]
+        for (dmin, dmax) in regions:
+            mask = (depth_true >= dmin) & (depth_true < dmax)
+            if np.any(mask):
+                avg_err = np.mean(depth_error_abs[mask])
+                std_err = np.std(depth_error_abs[mask])
+                print(f"Depth Error {dmin}-{dmax} mm: {avg_err:.3f} ± {std_err:.3f} mm (N={np.sum(mask)})")
+            else:
+                print(f"Depth range {dmin}-{dmax} mm: No data")
+
+
         # Overall  mean squared error
         DF_mse = np.sum((DF_P - self.DF) ** 2)
         DF_mse /= float(DF_P.shape[0] * DF_P.shape[1] * DF_P.shape[2])
@@ -264,8 +279,8 @@ class Helper(Operations):
         fig, (plt1, plt2) = plt.subplots(1, 2)
         
         plt1.scatter(self.DF[self.indxIncl],DF_P[self.indxIncl],s=1)
-        plt1.set_xlim([-5, 15])
-        plt1.set_ylim([-5, 15])
+        plt1.set_xlim([0, 10.5])
+        plt1.set_ylim([0, 10.5])
         y_lim1 = plt1.set_ylim()
         x_lim1 = plt1.set_xlim()
         plt1.plot(x_lim1, y_lim1,color='k')
@@ -304,13 +319,16 @@ class Helper(Operations):
 
    
 
-        plt.xlim([0, 10])
-        plt.ylim([0, 10])
-        plt.plot(plt.xlim([0, 10]), plt.ylim([0, 10]),linestyle='dashed', linewidth=3, color = 'b')
+        plt.xlim([0, 11])
+        plt.ylim([0, 11])
+        plt.plot(plt.xlim([0, 11]), plt.ylim([0, 11]),linestyle='dashed', linewidth=3, color = 'b')
         plt.ylabel("Predicted Depth (mm)")
         plt.xlabel("True Depth (mm)")
         #plt.title("Minimum Depth")
         plt.tight_layout()
+        plt.yticks([0, 2, 4, 6, 8, 10])
+        plt.xticks([0, 2, 4, 6, 8, 10])
+
         
         min_depth_graph.show()
         
@@ -327,14 +345,14 @@ class Helper(Operations):
             print("index_num: ", i)
             fig, axs = plt.subplots(2,3)
             plt.set_cmap('jet')
-            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=15), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
+            plt.colorbar(axs[0,0].imshow(self.DF[i,:,:],vmin=0,vmax=23), ax=axs[0, 0],fraction=0.046, pad=0.04, ticks = [0, 5, 10, 15])
             
 
             axs[0,0].axis('off')
             axs[0,0].set_title('True Depth (mm)')
         
             
-            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=15), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0,5 , 10, 15])
+            plt.colorbar(axs[0,1].imshow(DF_P[i,:,:],vmin=0,vmax=23), ax=axs[0, 1],fraction=0.046, pad=0.04, ticks = [0,5 , 10, 15])
             axs[0,1].axis('off')
             axs[0,1].set_title('Predicted Depth (mm)')
             plt.colorbar(axs[0,2].imshow(abs(DF_error[i,:,:]),vmin=0,vmax=10), ax=axs[0, 2],fraction=0.046, pad=0.04)
@@ -356,8 +374,13 @@ class Helper(Operations):
             if self.save in ['Y', 'y']:
                 # Define base name
                 print("inside")
-                base_filename = plot_save_path + f'_sample_{i}_'
+                # base_filename = plot_save_path + f'_sample_{i}_'
                 cmap = 'jet'
+
+                base_filename = plot_save_path + f'_sample_{i}_panel.png'
+    
+                # Save the entire 2x3 subplot figure
+                fig.savefig(base_filename, dpi=300, bbox_inches='tight')
                 
                 def save_with_colorbar(data, vmin, vmax, title, filename, ticks=None):
                     fig, ax = plt.subplots()
@@ -376,13 +399,13 @@ class Helper(Operations):
                     plt.savefig(filename, dpi=100, bbox_inches='tight')
                     plt.close(fig)  # Close the figure to free memory
 
-                # Save plots with colorbars
-                save_with_colorbar(self.DF[i, :, :], 0, 15, 'True Depth (mm)', base_filename + 'true_depth.png', ticks=[0, 5, 10, 15])
-                save_with_colorbar(DF_P[i, :, :], 0, 15, 'Predicted Depth (mm)', base_filename + 'predicted_depth.png', ticks=[0, 5, 10, 15])
-                save_with_colorbar(abs(DF_error[i, :, :]), 0, 10, '|Depth Error| (mm)', base_filename + 'depth_error.png', ticks=[0, 5, 10])
-                save_with_colorbar(self.QF[i, :, :], 0, 10, 'True Conc (μg/mL)', base_filename + 'true_conc.png', ticks=[0, 5, 10])
-                save_with_colorbar(QF_P[i, :, :], 0, 10, 'Predicted Conc (μg/mL)', base_filename + 'predicted_conc.png', ticks=[0, 5, 10])
-                save_with_colorbar(abs(QF_error[i, :, :]), 0, 10, '|Conc Error| (μg/mL)', base_filename + 'conc_error.png', ticks=[0, 5, 10])
+                # # Save plots with colorbars
+                # save_with_colorbar(self.DF[i, :, :], 0, 15, 'True Depth (mm)', base_filename + 'true_depth.png', ticks=[0, 5, 10, 15])
+                # save_with_colorbar(DF_P[i, :, :], 0, 15, 'Predicted Depth (mm)', base_filename + 'predicted_depth.png', ticks=[0, 5, 10, 15])
+                # save_with_colorbar(abs(DF_error[i, :, :]), 0, 10, '|Depth Error| (mm)', base_filename + 'depth_error.png', ticks=[0, 5, 10])
+                # save_with_colorbar(self.QF[i, :, :], 0, 10, 'True Conc (μg/mL)', base_filename + 'true_conc.png', ticks=[0, 5, 10])
+                # save_with_colorbar(QF_P[i, :, :], 0, 10, 'Predicted Conc (μg/mL)', base_filename + 'predicted_conc.png', ticks=[0, 5, 10])
+                # save_with_colorbar(abs(QF_error[i, :, :]), 0, 10, '|Conc Error| (μg/mL)', base_filename + 'conc_error.png', ticks=[0, 5, 10])
                             
 
             plt.show()

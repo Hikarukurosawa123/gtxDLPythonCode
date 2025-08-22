@@ -100,7 +100,7 @@ class Utils():
             params['strideConv2D'] = (1,1)
             params['kernelResBlock2D'] = (3,3)
             params['exportName'] = '20250814_no_dropout_sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder_background20'
-            params['background'] = 20 # Background value for the input maps, used to mask out the background in the loss function
+            params['background'] = 10 # Background value for the input maps, used to mask out the background in the loss function
             params['source'] = 's3' # Source of the data, either 's3' or 'local'            
             params['dataPath'] = './data/nImages10000_new.mat'
             params['modelName'] = 'sub_3D_u_net_with_3D_at_beg_2D_at_encoder_decoder' #'original_siamese_3DCNN' #
